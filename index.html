@@ -11,12 +11,12 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #f2fcfe, #1c92d2);
+      background: linear-gradient(to right, #d9a7c7, #fffcdc);
       color: #333;
     }
     header {
       padding: 20px;
-      background-color: #1c92d2;
+      background-color: #3a3f58;
       color: white;
       text-align: center;
     }
@@ -26,20 +26,22 @@
       margin: auto;
     }
     input, button, select, textarea {
-      margin: 5px;
+      margin: 5px 0;
       padding: 10px;
       border-radius: 5px;
       border: 1px solid #ccc;
       font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
     }
     button {
-      background-color: #1c92d2;
+      background-color: #3a3f58;
       color: white;
       border: none;
       cursor: pointer;
     }
     button:hover {
-      background-color: #1664a9;
+      background-color: #2a2e43;
     }
     section {
       margin-bottom: 30px;
@@ -55,7 +57,7 @@
     a#qrDownload {
       display: inline-block;
       margin-top: 10px;
-      color: #1c92d2;
+      color: #3a3f58;
       font-weight: bold;
     }
   </style>
@@ -95,7 +97,8 @@
 
     <section>
       <h2>5️⃣ Fraud Reports</h2>
-      <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3" style="width:100%;"></textarea><br>
+      <input id="fraudProductId" placeholder="Product ID for Report" />
+      <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3"></textarea>
       <button onclick="reportFraud()">🚨 Submit Report</button>
       <div id="fraudReports">No reports available.</div>
     </section>
@@ -149,12 +152,16 @@ window.addEventListener('load', async () => {
   document.getElementById("connectWallet").addEventListener("click", async () => {
     if (window.ethereum) {
       web3 = new Web3(window.ethereum);
-      await ethereum.request({ method: "eth_requestAccounts" });
-      contract = new web3.eth.Contract(abi, contractAddress);
-      startScanner();
-      alert("Wallet Connected ✅");
+      try {
+        await ethereum.request({ method: "eth_requestAccounts" });
+        contract = new web3.eth.Contract(abi, contractAddress);
+        startScanner();
+        alert("Wallet Connected ✅");
+      } catch (err) {
+        alert("❌ Failed to connect to MetaMask: " + err.message);
+      }
     } else {
-      alert("Install MetaMask!");
+      alert("Install MetaMask to use this DApp!");
     }
   });
 
@@ -174,15 +181,14 @@ async function registerProduct() {
   try {
     await contract.methods.registerProduct(id, name, manufacturer).send({ from: ethereum.selectedAddress });
     alert("✅ Registered!");
-    generateQRCode(id);
+    generateQRCode(`Product ID: ${id}\nName: ${name}\nManufacturer: ${manufacturer}`);
   } catch (e) {
     alert("❌ " + e.message);
   }
 }
 
-function generateQRCode(productId) {
-  const url = `${location.origin}${location.pathname}?id=${productId}`;
-  const qr = new QRious({ element: document.getElementById('qrCanvas'), value: url, size: 200 });
+function generateQRCode(infoText) {
+  const qr = new QRious({ element: document.getElementById('qrCanvas'), value: infoText, size: 200 });
   const downloadLink = document.getElementById("qrDownload");
   downloadLink.href = qr.toDataURL();
   downloadLink.style.display = 'inline-block';
@@ -205,16 +211,8 @@ function startScanner() {
     if (cameras.length) {
       currentCameraId = cameras[0].id;
       scanner.start(currentCameraId, { fps: 10, qrbox: 200 }, qrCodeMessage => {
-        document.getElementById("scanResult").innerText = "Scanned: " + qrCodeMessage;
-        try {
-          const url = new URL(qrCodeMessage);
-          const id = url.searchParams.get("id");
-          if (id) {
-            document.getElementById("verifyId").value = id;
-            verifyProduct(id);
-          }
-        } catch (e) {}
-      }, err => { console.log("Scan error:", err); });
+        document.getElementById("scanResult").innerText = "Scanned:\n" + qrCodeMessage;
+      });
     }
   });
 }
@@ -228,14 +226,6 @@ function switchCamera() {
         currentCameraId = cameras[nextIdx].id;
         scanner.start(currentCameraId, { fps: 10, qrbox: 200 }, msg => {
           document.getElementById("scanResult").innerText = msg;
-          try {
-            const url = new URL(msg);
-            const id = url.searchParams.get("id");
-            if (id) {
-              document.getElementById("verifyId").value = id;
-              verifyProduct(id);
-            }
-          } catch (e) {}
         });
       });
     }
@@ -256,11 +246,13 @@ function markUndelivered() {
 }
 
 function reportFraud() {
+  const id = document.getElementById("fraudProductId").value;
   const desc = document.getElementById("fraudDescription").value;
-  if (desc.trim() !== "") {
-    frauds.push(desc);
+  if (id && desc.trim() !== "") {
+    frauds.push({ id, desc });
     document.getElementById("fraudReports").innerHTML =
-      frauds.map((f, i) => `<p><strong>#${i + 1}</strong>: ${f}</p>`).join('');
+      frauds.map((f, i) => `<p><strong>#${i + 1}</strong> (ID: ${f.id}): ${f.desc}</p>`).join('');
+    document.getElementById("fraudProductId").value = "";
     document.getElementById("fraudDescription").value = "";
   }
 }
