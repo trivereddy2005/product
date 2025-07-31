@@ -90,19 +90,19 @@
   <div id="walletDisplay" class="message" style="display:none;"></div>
 
   <!-- Register Product -->
-  <form id="regForm" style="display:none;">
+  <form id="regForm">
     <label>Product ID</label><input id="pid" required />
     <label>Name</label><input id="pname" required />
     <label>Manufacturer</label><input id="manuf" required />
     <label>Date</label><input id="mdate" type="date" required />
-    <button type="submit">Register Product</button>
+    <button type="submit" id="regBtn">Register Product</button>
     <div id="regMsg" class="message" style="display:none;"></div>
   </form>
 
   <hr style="margin: 25px 0;"/>
 
   <!-- Verify Product -->
-  <div id="qr-reader" style="display:none;"></div>
+  <div id="qr-reader"></div>
   <label>Product ID for Verification</label>
   <input id="verifyId" />
   <button id="verifyBtn">Verify Product</button>
@@ -118,7 +118,8 @@
 </main>
 
 <script>
-  const contractABI = [[
+  const contractABI = [
+	  [
 	{
 		"inputs": [
 			{
@@ -389,7 +390,8 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]];
+]
+  ];
   const contractAddress = "0x3b83ed88b0f8c0a8ceb3c2a6b248d1fdd2619f81";
   let web3, contract, account;
 
@@ -405,8 +407,6 @@
       contract = new web3.eth.Contract(contractABI, contractAddress);
       document.getElementById("walletDisplay").style.display = "block";
       document.getElementById("walletDisplay").textContent = "Connected: " + account;
-      document.getElementById("regForm").style.display = "block";
-      document.getElementById("qr-reader").style.display = "block";
       setupQRScanner();
     } catch (err) {
       alert("Connection failed.");
