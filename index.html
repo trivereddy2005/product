@@ -8,54 +8,104 @@
   <script src="https://cdn.jsdelivr.net/npm/qrious"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    input, button, select { margin: 5px; padding: 8px; }
-    #qrCanvas { margin-top: 10px; }
-    section { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #f2fcfe, #1c92d2);
+      color: #333;
+    }
+    header {
+      padding: 20px;
+      background-color: #1c92d2;
+      color: white;
+      text-align: center;
+    }
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    input, button, select {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background-color: #1c92d2;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1664a9;
+    }
+    section {
+      margin-bottom: 30px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    #qrCanvas {
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+    a#qrDownload {
+      display: inline-block;
+      margin-top: 10px;
+      color: #1c92d2;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <button id="connectWallet">🔗 Connect Wallet</button>
+  <header>
+    <h1>Product Registry DApp</h1>
+    <button id="connectWallet">🔗 Connect Wallet</button>
+  </header>
+  <main>
+    <section>
+      <h2>1️⃣ Register Product</h2>
+      <input id="registerId" placeholder="Product ID" />
+      <input id="registerName" placeholder="Product Name" />
+      <input id="registerManufacturer" placeholder="Manufacturer" />
+      <button onclick="registerProduct()">Register Product</button>
+    </section>
 
-  <section>
-    <h2>1️⃣ Register Product</h2>
-    <input id="registerId" placeholder="Product ID" />
-    <input id="registerName" placeholder="Product Name" />
-    <input id="registerManufacturer" placeholder="Manufacturer" />
-    <button onclick="registerProduct()">Register Product</button>
-  </section>
+    <section>
+      <h2>2️⃣ QR Code</h2>
+      <canvas id="qrCanvas"></canvas><br>
+      <a id="qrDownload" download="qrcode.png">📥 Download QR Code</a>
+    </section>
 
-  <section>
-    <h2>2️⃣ QR Code</h2>
-    <canvas id="qrCanvas"></canvas><br>
-    <a id="qrDownload" download="qrcode.png" style="display:none;">📥 Download QR Code</a>
-  </section>
+    <section>
+      <h2>3️⃣ Verify Product</h2>
+      <input id="verifyId" placeholder="Product ID" />
+      <button onclick="verifyProduct()">Verify Product</button>
+      <p id="verifyResult"></p>
+    </section>
 
-  <section>
-    <h2>3️⃣ Verify Product</h2>
-    <input id="verifyId" placeholder="Product ID" />
-    <button onclick="verifyProduct()">Verify Product</button>
-    <p id="verifyResult"></p>
-  </section>
+    <section>
+      <h2>4️⃣ Delivery Status</h2>
+      <button onclick="markDelivered()">✅ Mark as Delivered</button>
+      <button onclick="markUndelivered()">❌ Mark as Undelivered</button>
+    </section>
 
-  <section>
-    <h2>4️⃣ Delivery Status</h2>
-    <button onclick="markDelivered()">✅ Mark as Delivered</button>
-    <button onclick="markUndelivered()">❌ Mark as Undelivered</button>
-  </section>
+    <section>
+      <h2>5️⃣ Fraud Reports</h2>
+      <div id="fraudReports">No reports available.</div>
+    </section>
 
-  <section>
-    <h2>5️⃣ Fraud Reports</h2>
-    <div id="fraudReports">No reports available.</div>
-  </section>
-
-  <section>
-    <h2>6️⃣ QR Scanner</h2>
-    <div id="scanner" style="width:300px;"></div>
-    <p id="scanResult"></p>
-    <button onclick="switchCamera()">🔄 Switch Camera</button>
-    <button onclick="toggleFlash()">💡 Toggle Flash</button>
-  </section>
+    <section>
+      <h2>6️⃣ QR Scanner</h2>
+      <div id="scanner" style="width:300px;"></div>
+      <p id="scanResult"></p>
+      <button onclick="switchCamera()">🔄 Switch Camera</button>
+      <button onclick="toggleFlash()">💡 Toggle Flash</button>
+    </section>
+  </main>
 
 <script>
 let web3, contract;
