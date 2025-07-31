@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Product Registry DApp</title>
 
-  <!-- Bootstrap CSS CDN -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
+  <!-- Web3 + QR Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <style>
     body { padding: 20px; }
@@ -71,8 +72,7 @@
 
   <script>
     const contractAddress = "0x41c4bbb465494d1141370d1fac8792fbb4e54f03";
-    const contractABI = [
-     [
+    const contractABI = [[
 	{
 		"inputs": [
 			{
@@ -343,9 +343,7 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
-    ];
-    
+]];
     let web3, contract, account;
 
     async function connectWallet() {
@@ -357,7 +355,7 @@
         contract = new web3.eth.Contract(contractABI, contractAddress);
         document.getElementById("walletAddress").innerText = `Connected: ${account}`;
       } else {
-        alert("Please install MetaMask or another Ethereum wallet.");
+        alert("Please install MetaMask.");
       }
     }
 
@@ -365,52 +363,34 @@
       const id = document.getElementById("productId").value;
       const name = document.getElementById("name").value;
       const mfg = document.getElementById("manufacturer").value;
-      const dateInput = document.getElementById("manufactureDate").value;
-      if (!id || !name || !mfg || !dateInput) {
-        alert("Please fill in all product details.");
-        return;
-      }
-      const date = Math.floor(new Date(dateInput).getTime() / 1000);
-
+      const date = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
       try {
         await contract.methods.registerProduct(id, name, mfg, date).send({ from: account });
         alert("✅ Product registered!");
         generateQRCode(id);
       } catch (err) {
-        if (err.message.includes("User denied")) {
-          alert("❌ You rejected the transaction.");
-        } else {
-          alert("❌ Error: " + err.message);
-        }
+        alert("❌ " + err.message);
       }
     }
 
     async function verifyProduct() {
       const id = document.getElementById("verifyId").value;
-      if (!id) {
-        alert("Please enter a Product ID.");
-        return;
-      }
       try {
         const result = await contract.methods.verifyProduct(id).call();
-        if (result[3] === false) {
+        if (!result.exists && result.exists !== undefined) {
           document.getElementById("verifyResult").innerText = "❌ Product not found.";
         } else {
-          const mfgDate = new Date(result[2] * 1000).toLocaleDateString();
+          const mfgDate = new Date(result.manufactureDate * 1000).toLocaleDateString();
           document.getElementById("verifyResult").innerText = 
-            `Name: ${result[0]}, Manufacturer: ${result[1]}, Manufacture Date: ${mfgDate}, Delivered: ${result[4]}`;
+            `Name: ${result.name}, Manufacturer: ${result.manufacturer}, Date: ${mfgDate}, Delivered: ${result.delivered}`;
         }
-      } catch (e) {
+      } catch (err) {
         alert("❌ Error fetching product details.");
       }
     }
 
     async function confirmDelivery() {
       const id = document.getElementById("deliveryId").value;
-      if (!id) {
-        alert("Please enter a Product ID.");
-        return;
-      }
       try {
         await contract.methods.confirmDelivery(id).send({ from: account });
         document.getElementById("deliveryResult").innerText = "✅ Delivery confirmed.";
@@ -422,10 +402,6 @@
     async function reportFraud() {
       const id = document.getElementById("fraudId").value;
       const comment = document.getElementById("fraudComment").value;
-      if (!id || !comment) {
-        alert("Please enter both Product ID and comment.");
-        return;
-      }
       try {
         await contract.methods.reportFraud(id, comment).send({ from: account });
         alert("✅ Fraud reported.");
@@ -436,24 +412,20 @@
 
     async function viewFraudReports() {
       const id = document.getElementById("fraudReportId").value;
-      if (!id) {
-        alert("Please enter a Product ID.");
-        return;
-      }
       try {
         const reports = await contract.methods.getFraudReports(id).call();
         const container = document.getElementById("fraudReports");
         container.innerHTML = "";
         if (reports.length === 0) {
-          container.innerText = "No fraud reports found.";
-          return;
+          container.innerText = "No reports found.";
+        } else {
+          reports.forEach(r => {
+            const div = document.createElement("div");
+            div.className = "p-2 mb-2 border rounded bg-light";
+            div.innerText = `By: ${r.reporter}\nComment: ${r.comment}\nTime: ${new Date(r.timestamp * 1000).toLocaleString()}`;
+            container.appendChild(div);
+          });
         }
-        reports.forEach(r => {
-          const div = document.createElement("div");
-          div.classList.add("border", "rounded", "p-2", "mb-2", "bg-light");
-          div.innerText = `By: ${r.reporter}\nComment: ${r.comment}\nTime: ${new Date(r.timestamp * 1000).toLocaleString()}`;
-          container.appendChild(div);
-        });
       } catch (err) {
         alert("❌ Error fetching fraud reports.");
       }
@@ -462,9 +434,9 @@
     function generateQRCode(productId) {
       const qrContainer = document.getElementById("qrContainer");
       qrContainer.innerHTML = "";
-      QRCode.toCanvas(productId, { width: 200 }, function (error, canvas) {
-        if (!error) qrContainer.appendChild(canvas);
-      });
+      QRCode.toCanvas(productId, { width: 200 })
+        .then(canvas => qrContainer.appendChild(canvas))
+        .catch(error => console.error("QR Code Error:", error));
     }
 
     const qrScanner = new Html5Qrcode("reader");
