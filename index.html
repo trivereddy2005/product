@@ -9,9 +9,10 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    input, button, textarea { margin: 5px 0; padding: 5px; width: 100%; }
+    input, button, textarea, select { margin: 5px 0; padding: 5px; width: 100%; }
     section { margin-bottom: 40px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
     .qrcode { margin-top: 10px; }
+    canvas { display: block; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -27,6 +28,7 @@
     <input type="date" id="manufactureDate" />
     <button onclick="registerProduct()">Register</button>
     <div class="qrcode" id="qrContainer"></div>
+    <a id="qrDownload" style="display:none;" download="product-qr.png">📥 Download QR Code</a>
   </section>
 
   <section>
@@ -59,14 +61,16 @@
 
   <section>
     <h2>Scan QR Code</h2>
-    <div id="reader" style="width: 300px;"></div>
+    <select id="cameraList"></select>
+    <button id="switchCamera">🎥 Switch Camera</button>
     <button id="flashToggle">🔦 Toggle Flashlight</button>
+    <div id="reader" style="width: 300px;"></div>
     <div id="scanResult"></div>
   </section>
 
   <script>
     const contractAddress = "0x41c4bbb465494d1141370d1fac8792fbb4e54f03";
-    const contractABI = [
+    const contractABI = [/* (same ABI from your original) */ 
       {
         "inputs": [
           { "internalType": "string", "name": "_productId", "type": "string" },
@@ -129,7 +133,7 @@
       }
     ];
 
-    let web3, contract, account;
+    let web3, contract, account, qrScanner, currentCameraId = null, isTorchOn = false, cameras = [];
 
     async function connectWallet() {
       if (window.ethereum) {
@@ -209,33 +213,53 @@
 
     function generateQRCode(productId) {
       const qrContainer = document.getElementById("qrContainer");
+      const downloadLink = document.getElementById("qrDownload");
       qrContainer.innerHTML = "";
       QRCode.toCanvas(productId, { width: 200 }, function (error, canvas) {
-        if (!error) qrContainer.appendChild(canvas);
+        if (!error) {
+          qrContainer.appendChild(canvas);
+          const dataURL = canvas.toDataURL("image/png");
+          downloadLink.href = dataURL;
+          downloadLink.style.display = "inline-block";
+        }
       });
     }
 
-    const qrScanner = new Html5Qrcode("reader");
-    let currentCameraId = null;
-    let isTorchOn = false;
-
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
-        const backCam = devices.find(d => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment")) || devices[0];
-        currentCameraId = backCam.id;
-
-        qrScanner.start(
-          currentCameraId,
-          { fps: 10, qrbox: 250 },
-          qrCodeMessage => {
-            document.getElementById("scanResult").innerText = `Scanned: ${qrCodeMessage}`;
-          }
-        ).catch(err => console.error("Failed to start QR scanner", err));
+    window.onload = async () => {
+      qrScanner = new Html5Qrcode("reader");
+      cameras = await Html5Qrcode.getCameras();
+      const cameraSelect = document.getElementById("cameraList");
+      cameras.forEach(cam => {
+        const option = document.createElement("option");
+        option.value = cam.id;
+        option.text = cam.label || cam.id;
+        cameraSelect.appendChild(option);
+      });
+      if (cameras.length > 0) {
+        currentCameraId = cameras[0].id;
+        startCamera(currentCameraId);
       }
+    };
+
+    function startCamera(cameraId) {
+      if (qrScanner) qrScanner.stop().catch(() => {});
+      qrScanner.start(
+        cameraId,
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          document.getElementById("scanResult").innerText = `Scanned: ${qrCodeMessage}`;
+          document.getElementById("verifyId").value = qrCodeMessage;
+        }
+      );
+      currentCameraId = cameraId;
+    }
+
+    document.getElementById("switchCamera").addEventListener("click", () => {
+      const selectedId = document.getElementById("cameraList").value;
+      if (selectedId) startCamera(selectedId);
     });
 
     document.getElementById("flashToggle").addEventListener("click", () => {
-      if (!qrScanner) return;
       isTorchOn = !isTorchOn;
       qrScanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] })
         .then(() => {
