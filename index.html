@@ -2,221 +2,442 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Registry dApp</title>
-  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Registry DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    h2 { margin-top: 30px; }
-    form { background: white; padding: 15px; margin-top: 10px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    label { display: block; margin-top: 10px; }
-    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-    button { margin-top: 15px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    #message, #error, #verifyResult { margin-top: 10px; }
-    #reader { width: 100%; max-width: 400px; margin-top: 10px; }
+    body { font-family: sans-serif; padding: 20px; }
+    input, button, textarea { margin: 5px 0; padding: 5px; width: 100%; }
+    section { margin-bottom: 40px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+    .qrcode { margin-top: 10px; }
   </style>
 </head>
 <body>
-
-  <h1>Product Registry dApp</h1>
-  <button onclick="connectWallet()">🔌 Connect MetaMask</button>
+  <h1>Product Registry DApp</h1>
+  <button onclick="connectWallet()">Connect Wallet</button>
   <div id="walletAddress"></div>
 
-  <!-- QR Code Scanner -->
-  <h2>📷 Scan Product QR</h2>
-  <div id="reader"></div>
-  <button onclick="startScanner()">Start Scanner</button>
-  <button onclick="stopScanner()">Stop Scanner</button>
+  <section>
+    <h2>Register Product</h2>
+    <input type="text" id="productId" placeholder="Product ID" />
+    <input type="text" id="name" placeholder="Product Name" />
+    <input type="text" id="manufacturer" placeholder="Manufacturer" />
+    <input type="date" id="manufactureDate" />
+    <button onclick="registerProduct()">Register</button>
+    <div class="qrcode" id="qrContainer"></div>
+  </section>
 
-  <!-- Product Registration -->
-  <h2>📝 Register Product</h2>
-  <form id="registerForm">
-    <label>Product ID</label>
-    <input type="text" id="productId" required>
-
-    <label>Product Name</label>
-    <input type="text" id="name" required>
-
-    <label>Manufacturer</label>
-    <input type="text" id="manufacturer" required>
-
-    <label>Manufacture Date</label>
-    <input type="date" id="manufactureDate" required>
-
-    <button type="submit">Register</button>
-    <div id="message"></div>
-    <div id="error"></div>
-  </form>
-
-  <!-- Product Verification -->
-  <h2>🔍 Verify Product</h2>
-  <form id="verifyForm">
-    <label>Enter Product ID</label>
-    <input type="text" id="verifyProductId" required>
-    <button type="submit">Verify</button>
+  <section>
+    <h2>Verify Product</h2>
+    <input type="text" id="verifyId" placeholder="Product ID" />
+    <button onclick="verifyProduct()">Verify</button>
     <div id="verifyResult"></div>
-  </form>
+  </section>
 
-  <!-- Fraud Reporting -->
-  <h2>🚨 Report Fraud</h2>
-  <form id="fraudForm">
-    <label>Product ID</label>
-    <input type="text" id="fraudProductId" required>
+  <section>
+    <h2>Confirm Delivery</h2>
+    <input type="text" id="deliveryId" placeholder="Product ID" />
+    <button onclick="confirmDelivery()">Confirm Delivery</button>
+    <div id="deliveryResult"></div>
+  </section>
 
-    <label>Comment</label>
-    <textarea id="fraudComment" required></textarea>
+  <section>
+    <h2>Report Fraud</h2>
+    <input type="text" id="fraudId" placeholder="Product ID" />
+    <textarea id="fraudComment" placeholder="Comment"></textarea>
+    <button onclick="reportFraud()">Report Fraud</button>
+  </section>
 
-    <button type="submit">Report</button>
-    <div id="fraudMessage"></div>
-  </form>
+  <section>
+    <h2>View Fraud Reports</h2>
+    <input type="text" id="fraudReportId" placeholder="Product ID" />
+    <button onclick="viewFraudReports()">View Reports</button>
+    <div id="fraudReports"></div>
+  </section>
+
+  <section>
+    <h2>Scan QR Code</h2>
+    <div id="reader" style="width: 300px;"></div>
+    <div id="scanResult"></div>
+  </section>
 
   <script>
-    let web3;
-    let contract;
-    let html5QrCode;
-
-    const contractAddress = "0x3b83ed88b0f8c0a8ceb3c2a6b248d1fdd2619f81"; // <-- Replace this
+    const contractAddress = "0x3b83ed88b0f8c0a8ceb3c2a6b248d1fdd2619f81";
     const contractABI = [
-      {
-        "inputs": [
-          { "internalType": "string", "name": "_productId", "type": "string" },
-          { "internalType": "string", "name": "_name", "type": "string" },
-          { "internalType": "string", "name": "_manufacturer", "type": "string" },
-          { "internalType": "uint256", "name": "_manufactureDate", "type": "uint256" }
-        ],
-        "name": "registerProduct",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-        "name": "verifyProduct",
-        "outputs": [
-          { "internalType": "string", "name": "name", "type": "string" },
-          { "internalType": "string", "name": "manufacturer", "type": "string" },
-          { "internalType": "uint256", "name": "manufactureDate", "type": "uint256" },
-          { "internalType": "bool", "name": "exists", "type": "bool" },
-          { "internalType": "bool", "name": "delivered", "type": "bool" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "string", "name": "_productId", "type": "string" },
-          { "internalType": "string", "name": "_comment", "type": "string" }
-        ],
-        "name": "reportFraud",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
+    [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "productId",
+				"type": "string"
+			}
+		],
+		"name": "DeliveryConfirmed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "productId",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "reporter",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "comment",
+				"type": "string"
+			}
+		],
+		"name": "FraudReported",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "productId",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			}
+		],
+		"name": "ProductRegistered",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_productId",
+				"type": "string"
+			}
+		],
+		"name": "confirmDelivery",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "fraudReports",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "reporter",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "comment",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_productId",
+				"type": "string"
+			}
+		],
+		"name": "getFraudReports",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "reporter",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "comment",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct ProductRegistry.FraudReport[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "products",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "manufactureDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "delivered",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_productId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_manufacturer",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_manufactureDate",
+				"type": "uint256"
+			}
+		],
+		"name": "registerProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_productId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_comment",
+				"type": "string"
+			}
+		],
+		"name": "reportFraud",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_productId",
+				"type": "string"
+			}
+		],
+		"name": "verifyProduct",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "manufactureDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "delivered",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]  
     ];
+    let web3, contract, account;
 
     async function connectWallet() {
       if (window.ethereum) {
-        try {
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          web3 = new Web3(window.ethereum);
-          const accounts = await web3.eth.getAccounts();
-          document.getElementById("walletAddress").innerText = "Connected: " + accounts[0];
-          contract = new web3.eth.Contract(contractABI, contractAddress);
-        } catch (err) {
-          alert("Wallet connection rejected.");
-        }
-      } else {
-        alert("MetaMask not found.");
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = await web3.eth.getAccounts();
+        account = accounts[0];
+        contract = new web3.eth.Contract(contractABI, contractAddress);
+        document.getElementById("walletAddress").innerText = `Connected: ${account}`;
       }
     }
 
-    document.getElementById("registerForm").onsubmit = async function(e) {
-      e.preventDefault();
-      const productId = document.getElementById("productId").value;
+    async function registerProduct() {
+      const id = document.getElementById("productId").value;
       const name = document.getElementById("name").value;
-      const manufacturer = document.getElementById("manufacturer").value;
-      const manufactureDate = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
+      const mfg = document.getElementById("manufacturer").value;
+      const date = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
 
       try {
-        const accounts = await web3.eth.getAccounts();
-        await contract.methods.registerProduct(productId, name, manufacturer, manufactureDate)
-          .send({ from: accounts[0] });
-
-        document.getElementById("message").innerText = "✅ Registered successfully!";
-        document.getElementById("error").innerText = "";
+        await contract.methods.registerProduct(id, name, mfg, date).send({ from: account });
+        alert("✅ Product registered!");
+        generateQRCode(id);
       } catch (err) {
-        if (err.message.includes("User denied transaction")) {
-          document.getElementById("error").innerText = "❌ Transaction rejected by user.";
+        if (err.message.includes("User denied")) {
+          alert("❌ You rejected the transaction.");
         } else {
-          document.getElementById("error").innerText = "❌ Error: " + err.message;
+          alert("❌ Error: " + err.message);
         }
-        document.getElementById("message").innerText = "";
       }
-    };
+    }
 
-    document.getElementById("verifyForm").onsubmit = async function(e) {
-      e.preventDefault();
-      const pid = document.getElementById("verifyProductId").value;
+    async function verifyProduct() {
+      const id = document.getElementById("verifyId").value;
       try {
-        const data = await contract.methods.verifyProduct(pid).call();
-        if (data.exists) {
-          const dateStr = new Date(data.manufactureDate * 1000).toLocaleDateString();
-          document.getElementById("verifyResult").innerHTML =
-            `✅ Product Found<br>
-            Name: ${data.name}<br>
-            Manufacturer: ${data.manufacturer}<br>
-            Date: ${dateStr}<br>
-            Delivered: ${data.delivered ? 'Yes' : 'No'}`;
-        } else {
-          document.getElementById("verifyResult").innerText = "❌ Product not found.";
-        }
-      } catch (err) {
-        document.getElementById("verifyResult").innerText = "❌ Error: " + err.message;
+        const result = await contract.methods.verifyProduct(id).call();
+        document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}, Delivered: ${result[4]}`;
+      } catch (e) {
+        alert("❌ Product not found.");
       }
-    };
+    }
 
-    document.getElementById("fraudForm").onsubmit = async function(e) {
-      e.preventDefault();
-      const pid = document.getElementById("fraudProductId").value;
+    async function confirmDelivery() {
+      const id = document.getElementById("deliveryId").value;
+      try {
+        await contract.methods.confirmDelivery(id).send({ from: account });
+        document.getElementById("deliveryResult").innerText = "✅ Delivery confirmed.";
+      } catch (err) {
+        alert("❌ " + err.message);
+      }
+    }
+
+    async function reportFraud() {
+      const id = document.getElementById("fraudId").value;
       const comment = document.getElementById("fraudComment").value;
       try {
-        const accounts = await web3.eth.getAccounts();
-        await contract.methods.reportFraud(pid, comment).send({ from: accounts[0] });
-        document.getElementById("fraudMessage").innerText = "✅ Fraud reported.";
+        await contract.methods.reportFraud(id, comment).send({ from: account });
+        alert("✅ Fraud reported.");
       } catch (err) {
-        document.getElementById("fraudMessage").innerText = "❌ Error: " + err.message;
+        alert("❌ " + err.message);
       }
-    };
+    }
 
-    function startScanner() {
-      html5QrCode = new Html5Qrcode("reader");
-      Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-          html5QrCode.start(
-            cameras[0].id,
-            { fps: 10, qrbox: 250 },
-            qrCodeMessage => {
-              document.getElementById("productId").value = qrCodeMessage;
-              document.getElementById("verifyProductId").value = qrCodeMessage;
-              document.getElementById("fraudProductId").value = qrCodeMessage;
-              stopScanner();
-            },
-            error => {}
-          );
-        }
-      }).catch(err => {
-        alert("Camera access denied or not found.");
+    async function viewFraudReports() {
+      const id = document.getElementById("fraudReportId").value;
+      try {
+        const reports = await contract.methods.getFraudReports(id).call();
+        const container = document.getElementById("fraudReports");
+        container.innerHTML = "";
+        reports.forEach(r => {
+          const div = document.createElement("div");
+          div.innerText = `By: ${r.reporter}, Comment: ${r.comment}, Time: ${new Date(r.timestamp * 1000).toLocaleString()}`;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        alert("❌ Error fetching fraud reports.");
+      }
+    }
+
+    function generateQRCode(productId) {
+      const qrContainer = document.getElementById("qrContainer");
+      qrContainer.innerHTML = "";
+      QRCode.toCanvas(productId, { width: 200 }, function (error, canvas) {
+        if (!error) qrContainer.appendChild(canvas);
       });
     }
 
-    function stopScanner() {
-      if (html5QrCode) html5QrCode.stop().then(() => {
-        html5QrCode.clear();
-      });
-    }
+    const qrScanner = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices && devices.length) {
+        qrScanner.start(
+          devices[0].id,
+          { fps: 10, qrbox: 250 },
+          qrCodeMessage => {
+            document.getElementById("scanResult").innerText = `Scanned: ${qrCodeMessage}`;
+          }
+        );
+      }
+    });
   </script>
-
 </body>
 </html>
