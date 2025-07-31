@@ -2,263 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Product Registry with Admin OTP</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet" />
+  <title>MetaMask Product Registry</title>
   <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
   <style>
     body {
-      background: #f2f7fa;
-      font-family: "Montserrat", Arial, sans-serif;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
     }
-    .card {
+    .container {
+      max-width: 600px;
+      margin: auto;
       background: #fff;
-      max-width: 420px;
-      margin: 38px auto;
-      border-radius: 18px;
-      box-shadow: 0 6px 28px #b0b6d6aa;
-      padding: 33px 22px;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
     }
-    h1 {
-      color: #2c52d5;
-      font-size: 2.1rem;
-      text-align: center;
-      font-weight: 800;
-      margin-bottom: 10px;
+    h2, h3 {
+      color: #333;
     }
-    .step {
-      margin-top: 15px;
-      padding: 11px 6px 3px 6px;
-    }
-    label {
-      font-weight: 600;
-      margin-top: 12px;
-      display: block;
-    }
-    input,
-    button {
+    input, button {
+      padding: 10px;
+      margin-top: 8px;
       width: 100%;
-      font-size: 1.02rem;
-      padding: 10px 13px;
-      margin-top: 6px;
-      margin-bottom: 13px;
-      border-radius: 7px;
-      border: 1.1px solid #bcd9ef;
-      background: #f6f8fc;
-      font-family: inherit;
-    }
-    input:focus {
-      border-color: #2274f7;
-      outline: none;
+      font-size: 1rem;
+      margin-bottom: 16px;
     }
     button {
-      background: linear-gradient(90deg, #2873e5 80%, #633de7);
+      background: #1976d2;
       color: white;
-      font-weight: 700;
       border: none;
-      margin-top: 6px;
       cursor: pointer;
     }
-    button:disabled {
-      background: #bdd4f4;
-      cursor: not-allowed;
+    button:hover {
+      background: #125da8;
     }
-    .status {
-      font-weight: 700;
-      margin: 5px 0 7px 0;
-      padding: 8px 10px;
-      border-radius: 6px;
-    }
-    .success {
-      color: #167536 !important;
-      background: #e7fae9;
-    }
-    .error {
-      color: #a12020 !important;
-      background: #fce9e7;
-    }
-    .hide {
-      display: none !important;
+    #otpDisplay {
+      font-weight: bold;
+      color: #2e7d32;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Product Registry</h1>
+  <div class="container">
+    <h2>🔐 Product Registry with MetaMask + OTP</h2>
 
-    <!-- Login -->
-    <div class="step" id="loginStep">
-      <label>Username</label>
-      <input id="loginUser" autocomplete="username" />
-      <label>Password</label>
-      <input id="loginPwd" type="password" autocomplete="current-password" />
-      <button id="loginBtn">Login</button>
-      <div id="loginMsg" class="status hide"></div>
-    </div>
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+    <div id="walletAddress"></div>
 
-    <!-- Admin OTP generation -->
-    <div class="step hide" id="adminOtpStep">
-      <h3>Admin: Generate Registration OTP</h3>
-      <label>User Wallet Address</label>
-      <input id="adminUserAddr" placeholder="0xUserWalletAddress" />
-      <button id="generateOtpBtn">Generate OTP</button>
-      <div id="generatedOtpMsg" class="status hide"></div>
-    </div>
+    <button onclick="generateOtp()">🔐 Generate OTP</button>
+    <div id="otpDisplay"></div>
 
-    <!-- Wallet connect -->
-    <div class="step hide" id="walletStep">
-      <button id="connectBtn">🔑 Connect MetaMask Wallet</button>
-      <span
-        id="walletDisp"
-        style="display:block; margin-top: 3px; color: #238454; font-weight: 600;"
-      ></span>
-      <div id="walletMsg" class="status hide"></div>
-    </div>
+    <input id="otpInput" placeholder="Enter OTP to verify" />
+    <button onclick="verifyOtp()">✅ Verify OTP</button>
 
-    <!-- OTP verification -->
-    <div class="step hide" id="otpStep">
-      <label>Registration OTP (from admin)</label>
-      <input id="userOtp" />
-      <button id="otpBtn" disabled>Verify OTP to Unlock Registration</button>
-      <div id="otpMsg" class="status hide"></div>
-    </div>
-
-    <!-- Product Registration -->
-    <div class="step hide" id="regStep">
-      <form id="regForm" autocomplete="off">
-        <label>Product ID</label>
-        <input id="pid" required />
-        <label>Name</label>
-        <input id="pname" required />
-        <label>Manufacturer</label>
-        <input id="manuf" required />
-        <label>Manufacture Date</label>
-        <input id="mfgdate" type="date" required />
-        <button type="submit">Register Product</button>
-      </form>
-      <div id="regMsg" class="status hide"></div>
-    </div>
+    <h3>📦 Register Product</h3>
+    <input id="pid" placeholder="Product ID" />
+    <input id="pname" placeholder="Product Name" />
+    <input id="manuf" placeholder="Manufacturer" />
+    <input id="mfgdate" type="date" />
+    <button onclick="registerProduct()">📌 Register Product</button>
   </div>
 
   <script>
-    // Replace with your contract ABI & address
-    const contractABI = [
-      [
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "otp",
-				"type": "string"
-			}
-		],
-		"name": "confirmDelivery",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			}
-		],
-		"name": "DeliveryConfirmed",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			}
-		],
-		"name": "DeliveryOtpGenerated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "reporter",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "details",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "FraudReported",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "recipient",
-				"type": "address"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "otpHash",
-				"type": "bytes32"
-			}
-		],
-		"name": "generateDeliveryOtp",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
+    const contractABI = [ 
+     [
 	{
 		"inputs": [
 			{
@@ -276,6 +84,11 @@
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
 	},
 	{
 		"anonymous": false,
@@ -311,7 +124,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "productName",
+				"name": "name",
 				"type": "string"
 			},
 			{
@@ -334,7 +147,7 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
+				"indexed": false,
 				"internalType": "address",
 				"name": "user",
 				"type": "address"
@@ -344,28 +157,10 @@
 		"type": "event"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "productId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "details",
-				"type": "string"
-			}
-		],
-		"name": "reportFraud",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
+				"indexed": false,
 				"internalType": "address",
 				"name": "user",
 				"type": "address"
@@ -388,6 +183,25 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "isVerified",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "owner",
 		"outputs": [
@@ -395,6 +209,69 @@
 				"internalType": "address",
 				"name": "",
 				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "products",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "productId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "manufactureDate",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "delivered",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "registrationOtpHashes",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
 			}
 		],
 		"stateMutability": "view",
@@ -446,153 +323,80 @@
 	}
 ]
     ];
-    const contractAddress = "0xf94ac6fe1bc75a7462cc5f7f9e14a5d281f1b46b";
 
-    let web3, contract, userAccount, otpVerified = false;
+    const contractAddress = "0xaf9adc472e689693cab8ba208f27972303421bc0"; // 🔁 Replace with your deployed contract address
 
-    // Login
-    document.getElementById("loginBtn").onclick = () => {
-      const username = document.getElementById("loginUser").value.trim();
-      const password = document.getElementById("loginPwd").value.trim();
-      const m = document.getElementById("loginMsg");
+    let web3;
+    let contract;
+    let userAccount;
+    let currentOTP;
 
-      if (username === "admin" && password === "admin123") {
-        document.getElementById("loginStep").classList.add("hide");
-        document.getElementById("walletStep").classList.remove("hide");
-        document.getElementById("adminOtpStep").classList.remove("hide");
-        m.classList.add("hide");
-      } else if (username === "user" && password === "password123") {
-        document.getElementById("loginStep").classList.add("hide");
-        document.getElementById("walletStep").classList.remove("hide");
-        m.classList.add("hide");
-      } else {
-        m.textContent = "Invalid username or password.";
-        m.className = "status error";
-        m.classList.remove("hide");
-      }
-    };
-
-    // Connect Wallet
-    document.getElementById("connectBtn").onclick = async () => {
+    async function connectWallet() {
       if (!window.ethereum) {
-        alert("Please install MetaMask!");
+        alert("Please install MetaMask.");
         return;
       }
+
       web3 = new Web3(window.ethereum);
-      try {
-        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-        userAccount = accounts[0];
-        contract = new web3.eth.Contract(contractABI, contractAddress);
-        document.getElementById("walletDisp").textContent =
-          userAccount.slice(0, 6) + "..." + userAccount.slice(-4);
-        document.getElementById("walletStep").classList.add("hide");
+      const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+      userAccount = accounts[0];
+      contract = new web3.eth.Contract(contractABI, contractAddress);
 
-        // Show OTP step for users, Admin stays at OTP generation step
-        if (document.getElementById("adminOtpStep").classList.contains("hide")) {
-          document.getElementById("otpStep").classList.remove("hide");
-        }
-      } catch (error) {
-        alert("Wallet connection denied.");
-      }
-    };
+      document.getElementById("walletAddress").innerText = `🔓 Connected Wallet: ${userAccount}`;
+    }
 
-    // Admin generates OTP
-    document.getElementById("generateOtpBtn").onclick = async () => {
-      const userAddr = document.getElementById("adminUserAddr").value.trim();
-      const msg = document.getElementById("generatedOtpMsg");
-      msg.classList.add("hide");
+    async function generateOtp() {
+      if (!userAccount) return alert("Connect wallet first.");
 
-      if (!web3.utils.isAddress(userAddr)) {
-        msg.textContent = "Invalid Ethereum address.";
-        msg.className = "status error";
-        msg.classList.remove("hide");
-        return;
-      }
+      currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = web3.utils.keccak256(currentOTP);
 
       try {
-        // Generate random 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Hash OTP using keccak256
-        const otpHash = web3.utils.keccak256(otp);
-
-        // Send OTP hash to contract with admin wallet
-        await contract.methods.generateRegistrationOtp(userAddr, otpHash).send({ from: userAccount });
-
-        msg.textContent = `OTP generated: ${otp}\nSend this securely to the user.`;
-        msg.className = "status success";
-        msg.classList.remove("hide");
-      } catch (e) {
-        msg.textContent = "Failed to generate OTP. Are you the contract owner?";
-        msg.className = "status error";
-        msg.classList.remove("hide");
-        console.error(e);
+        await contract.methods.generateRegistrationOtp(userAccount, otpHash).send({ from: userAccount });
+        document.getElementById("otpDisplay").innerText = `✅ OTP for registration: ${currentOTP}`;
+      } catch (err) {
+        alert("Failed to generate OTP.");
+        console.error(err);
       }
-    };
+    }
 
-    // Enable OTP button when user types OTP
-    document.getElementById("userOtp").oninput = function () {
-      document.getElementById("otpBtn").disabled = this.value.trim().length === 0;
-      document.getElementById("otpMsg").classList.add("hide");
-    };
+    async function verifyOtp() {
+      const enteredOtp = document.getElementById("otpInput").value.trim();
+      if (!enteredOtp) return alert("Please enter your OTP.");
 
-    // User verifies OTP
-    document.getElementById("otpBtn").onclick = async () => {
-      const otp = document.getElementById("userOtp").value.trim();
-      const m = document.getElementById("otpMsg");
-      m.classList.add("hide");
       try {
-        await contract.methods.verifyUserOtp(otp).send({ from: userAccount });
-
-        document.getElementById("otpStep").classList.add("hide");
-        document.getElementById("regStep").classList.remove("hide");
-        otpVerified = true;
-        m.textContent = "OTP verified! Registration unlocked.";
-        m.className = "status success";
-        m.classList.remove("hide");
-      } catch (e) {
-        m.textContent = "Invalid OTP or not generated by admin for you.";
-        m.className = "status error";
-        m.classList.remove("hide");
+        await contract.methods.verifyUserOtp(enteredOtp).send({ from: userAccount });
+        alert("OTP verified! You can now register a product.");
+      } catch (err) {
+        alert("OTP verification failed.");
+        console.error(err);
       }
-    };
+    }
 
-    // Product registration form submission
-    document.getElementById("regForm").onsubmit = async (e) => {
-      e.preventDefault();
-      if (!otpVerified) {
-        alert("Please verify OTP before registering a product.");
-        return;
-      }
+    async function registerProduct() {
       const pid = document.getElementById("pid").value.trim();
       const pname = document.getElementById("pname").value.trim();
       const manuf = document.getElementById("manuf").value.trim();
-      const mfgdate = document.getElementById("mfgdate").value;
+      const mfgRaw = document.getElementById("mfgdate").value;
 
-      if (!pid || !pname || !manuf || !mfgdate) {
-        alert("All fields are required.");
+      if (!pid || !pname || !manuf || !mfgRaw) {
+        alert("Please fill in all product fields.");
         return;
       }
 
-      const m = document.getElementById("regMsg");
-      m.classList.add("hide");
+      const mfgTimestamp = Math.floor(new Date(mfgRaw).getTime() / 1000);
 
       try {
-        const mfgTimestamp = Math.floor(new Date(mfgdate).getTime() / 1000);
         await contract.methods
           .registerProduct(pid, pname, manuf, mfgTimestamp)
           .send({ from: userAccount });
-        m.textContent = "Product registered successfully!";
-        m.className = "status success";
-        m.classList.remove("hide");
-        e.target.reset();
+
+        alert("✅ Product registered successfully!");
       } catch (err) {
-        m.textContent = "Failed to register product.";
-        m.className = "status error";
-        m.classList.remove("hide");
+        alert("Failed to register product.");
         console.error(err);
       }
-    };
+    }
   </script>
 </body>
 </html>
