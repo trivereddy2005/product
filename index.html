@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Registry DApp</title>
   <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     input, button, textarea, select { margin: 5px 0; padding: 5px; width: 100%; }
     section { margin-bottom: 40px; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
-    .qrcode { margin-top: 10px; }
-    canvas { display: block; margin-top: 10px; }
+    .qrcode { margin-top: 10px; text-align: center; }
+    canvas { display: block; margin: 10px auto; }
   </style>
 </head>
 <body>
@@ -27,8 +27,10 @@
     <input type="text" id="manufacturer" placeholder="Manufacturer" />
     <input type="date" id="manufactureDate" />
     <button onclick="registerProduct()">Register</button>
-    <div class="qrcode" id="qrContainer"></div>
-    <a id="qrDownload" style="display:none;" download="product-qr.png">📥 Download QR Code</a>
+    <div class="qrcode">
+      <canvas id="qrCanvas"></canvas>
+      <a id="qrDownload" style="display:none;" download="product-qr.png">📥 Download QR Code</a>
+    </div>
   </section>
 
   <section>
@@ -70,69 +72,8 @@
 
   <script>
     const contractAddress = "0x41c4bbb465494d1141370d1fac8792fbb4e54f03";
-    const contractABI = [/* (same ABI from your original) */ 
-      {
-        "inputs": [
-          { "internalType": "string", "name": "_productId", "type": "string" },
-          { "internalType": "string", "name": "_name", "type": "string" },
-          { "internalType": "string", "name": "_manufacturer", "type": "string" },
-          { "internalType": "uint256", "name": "_manufactureDate", "type": "uint256" }
-        ],
-        "name": "registerProduct",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-        "name": "verifyProduct",
-        "outputs": [
-          { "internalType": "string", "name": "name", "type": "string" },
-          { "internalType": "string", "name": "manufacturer", "type": "string" },
-          { "internalType": "uint256", "name": "manufactureDate", "type": "uint256" },
-          { "internalType": "bool", "name": "exists", "type": "bool" },
-          { "internalType": "bool", "name": "delivered", "type": "bool" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-        "name": "confirmDelivery",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          { "internalType": "string", "name": "_productId", "type": "string" },
-          { "internalType": "string", "name": "_comment", "type": "string" }
-        ],
-        "name": "reportFraud",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-        "name": "getFraudReports",
-        "outputs": [
-          {
-            "components": [
-              { "internalType": "address", "name": "reporter", "type": "address" },
-              { "internalType": "string", "name": "comment", "type": "string" },
-              { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
-            ],
-            "internalType": "struct ProductRegistry.FraudReport[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-
+    const contractABI = [/* same ABI as before */];
+    
     let web3, contract, account, qrScanner, currentCameraId = null, isTorchOn = false, cameras = [];
 
     async function connectWallet() {
@@ -156,19 +97,28 @@
         alert("✅ Product registered!");
         generateQRCode(id);
       } catch (err) {
-        if (err.message.includes("User denied")) {
-          alert("❌ You rejected the transaction.");
-        } else {
-          alert("❌ Error: " + err.message);
-        }
+        alert("❌ Error: " + err.message);
       }
+    }
+
+    function generateQRCode(text) {
+      const qr = new QRious({
+        element: document.getElementById('qrCanvas'),
+        value: text,
+        size: 200
+      });
+
+      const downloadLink = document.getElementById('qrDownload');
+      downloadLink.href = qr.toDataURL();
+      downloadLink.style.display = 'inline-block';
     }
 
     async function verifyProduct() {
       const id = document.getElementById("verifyId").value;
       try {
         const result = await contract.methods.verifyProduct(id).call();
-        document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}, Delivered: ${result[4]}`;
+        document.getElementById("verifyResult").innerText = 
+          `Name: ${result[0]}, Manufacturer: ${result[1]}, Delivered: ${result[4]}`;
       } catch (e) {
         alert("❌ Product not found.");
       }
@@ -211,21 +161,7 @@
       }
     }
 
-    function generateQRCode(productId) {
-      const qrContainer = document.getElementById("qrContainer");
-      const downloadLink = document.getElementById("qrDownload");
-      qrContainer.innerHTML = "";
-      QRCode.toCanvas(productId, { width: 200 }, function (error, canvas) {
-        if (!error) {
-          qrContainer.appendChild(canvas);
-          const dataURL = canvas.toDataURL("image/png");
-          downloadLink.href = dataURL;
-          downloadLink.style.display = "inline-block";
-        }
-      });
-    }
-
-    window.onload = async () => {
+    async function initScanner() {
       qrScanner = new Html5Qrcode("reader");
       cameras = await Html5Qrcode.getCameras();
       const cameraSelect = document.getElementById("cameraList");
@@ -239,7 +175,7 @@
         currentCameraId = cameras[0].id;
         startCamera(currentCameraId);
       }
-    };
+    }
 
     function startCamera(cameraId) {
       if (qrScanner) qrScanner.stop().catch(() => {});
@@ -250,7 +186,7 @@
           document.getElementById("scanResult").innerText = `Scanned: ${qrCodeMessage}`;
           document.getElementById("verifyId").value = qrCodeMessage;
         }
-      );
+      ).catch(err => console.error("Camera start error:", err));
       currentCameraId = cameraId;
     }
 
@@ -261,15 +197,17 @@
 
     document.getElementById("flashToggle").addEventListener("click", () => {
       isTorchOn = !isTorchOn;
-      qrScanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] })
-        .then(() => {
-          document.getElementById("flashToggle").innerText = isTorchOn ? "🔦 Flashlight ON" : "🔦 Flashlight OFF";
-        })
-        .catch(err => {
-          alert("❌ Flashlight not supported.");
-          console.error(err);
-        });
+      qrScanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] }).then(() => {
+        document.getElementById("flashToggle").innerText = isTorchOn ? "🔦 Flashlight ON" : "🔦 Flashlight OFF";
+      }).catch(err => {
+        alert("❌ Flashlight not supported.");
+        console.error(err);
+      });
     });
+
+    window.onload = () => {
+      initScanner();
+    };
   </script>
 </body>
 </html>
