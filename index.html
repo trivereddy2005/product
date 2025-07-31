@@ -25,7 +25,7 @@
       max-width: 900px;
       margin: auto;
     }
-    input, button, select {
+    input, button, select, textarea {
       margin: 5px;
       padding: 10px;
       border-radius: 5px;
@@ -95,6 +95,8 @@
 
     <section>
       <h2>5️⃣ Fraud Reports</h2>
+      <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3" style="width:100%;"></textarea><br>
+      <button onclick="reportFraud()">🚨 Submit Report</button>
       <div id="fraudReports">No reports available.</div>
     </section>
 
@@ -112,6 +114,7 @@ let web3, contract;
 let currentCameraId = null;
 let currentFlashOn = false;
 let scanner;
+let frauds = [];
 
 const contractAddress = "0x77387a8b2f51c7bb777739d01a19c3d98c0e4c75";
 const abi = [
@@ -178,7 +181,7 @@ async function registerProduct() {
 }
 
 function generateQRCode(productId) {
-  const url = `https://yourdomain.com/index.html?id=${productId}`;
+  const url = `${location.origin}${location.pathname}?id=${productId}`;
   const qr = new QRious({ element: document.getElementById('qrCanvas'), value: url, size: 200 });
   const downloadLink = document.getElementById("qrDownload");
   downloadLink.href = qr.toDataURL();
@@ -250,6 +253,16 @@ function markDelivered() {
 
 function markUndelivered() {
   alert("❌ Marked as not delivered (mock)");
+}
+
+function reportFraud() {
+  const desc = document.getElementById("fraudDescription").value;
+  if (desc.trim() !== "") {
+    frauds.push(desc);
+    document.getElementById("fraudReports").innerHTML =
+      frauds.map((f, i) => `<p><strong>#${i + 1}</strong>: ${f}</p>`).join('');
+    document.getElementById("fraudDescription").value = "";
+  }
 }
 </script>
 </body>
