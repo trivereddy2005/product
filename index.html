@@ -11,42 +11,54 @@
     body { font-family: sans-serif; margin: 20px; }
     input, button, select { margin: 5px; padding: 8px; }
     #qrCanvas { margin-top: 10px; }
+    section { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
   </style>
 </head>
 <body>
-  <h2>📝 Register Product</h2>
-  <input id="registerId" placeholder="Product ID" />
-  <input id="registerName" placeholder="Product Name" />
-  <input id="registerManufacturer" placeholder="Manufacturer" />
-  <label>
-    Delivered?
-    <select id="deliveredStatus">
-      <option value="true">Yes</option>
-      <option value="false">No</option>
-    </select>
-  </label>
-  <button onclick="registerProduct()">Register</button>
-  <br>
-  <canvas id="qrCanvas"></canvas>
-  <br>
-  <a id="qrDownload" download="qrcode.png" style="display:none;">📥 Download QR Code</a>
+  <button id="connectWallet">🔗 Connect Wallet</button>
 
-  <h2>🔍 Verify Product</h2>
-  <input id="verifyId" placeholder="Product ID" />
-  <button onclick="verifyProduct()">Verify</button>
-  <p id="verifyResult"></p>
+  <section>
+    <h2>1️⃣ Register Product</h2>
+    <input id="registerId" placeholder="Product ID" />
+    <input id="registerName" placeholder="Product Name" />
+    <input id="registerManufacturer" placeholder="Manufacturer" />
+    <button onclick="registerProduct()">Register Product</button>
+  </section>
 
-  <h2>📷 QR Scanner</h2>
-  <div id="scanner" style="width:300px;"></div>
-  <p id="scanResult"></p>
-  <button onclick="switchCamera()">🔄 Switch Camera</button>
-  <button onclick="toggleFlash()">💡 Toggle Flash</button>
+  <section>
+    <h2>2️⃣ QR Code</h2>
+    <canvas id="qrCanvas"></canvas><br>
+    <a id="qrDownload" download="qrcode.png" style="display:none;">📥 Download QR Code</a>
+  </section>
 
-  <h2>🚨 Fraud Reports</h2>
-  <button onclick="showFraudReports()">Show Reports</button>
-  <ul id="fraudList"></ul>
+  <section>
+    <h2>3️⃣ Verify Product</h2>
+    <input id="verifyId" placeholder="Product ID" />
+    <button onclick="verifyProduct()">Verify Product</button>
+    <p id="verifyResult"></p>
+  </section>
+
+  <section>
+    <h2>4️⃣ Delivery Status</h2>
+    <button onclick="markDelivered()">✅ Mark as Delivered</button>
+    <button onclick="markUndelivered()">❌ Mark as Undelivered</button>
+  </section>
+
+  <section>
+    <h2>5️⃣ Fraud Reports</h2>
+    <div id="fraudReports">No reports available.</div>
+  </section>
+
+  <section>
+    <h2>6️⃣ QR Scanner</h2>
+    <div id="scanner" style="width:300px;"></div>
+    <p id="scanResult"></p>
+    <button onclick="switchCamera()">🔄 Switch Camera</button>
+    <button onclick="toggleFlash()">💡 Toggle Flash</button>
+  </section>
 
 <script>
+let web3, contract;
 let currentCameraId = null;
 let currentFlashOn = false;
 let scanner;
@@ -65,19 +77,9 @@ const abi = [
     "type": "function"
   },
   {
-    "inputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
-    "name": "products",
-    "outputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "manufacturer", "type": "string" },
-      { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
-      { "internalType": "bool", "name": "delivered", "type": "bool" }
+    "inputs": [
+      { "internalType": "uint256", "name": "id", "type": "uint256" }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [ { "internalType": "uint256", "name": "id", "type": "uint256" } ],
     "name": "verifyProduct",
     "outputs": [
       { "internalType": "string", "name": "name", "type": "string" },
@@ -90,16 +92,24 @@ const abi = [
   }
 ];
 
-let web3, contract;
-
 window.addEventListener('load', async () => {
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum);
-    await ethereum.request({ method: "eth_requestAccounts" });
-    contract = new web3.eth.Contract(abi, contractAddress);
-    startScanner();
-  } else {
-    alert("Install MetaMask");
+  document.getElementById("connectWallet").addEventListener("click", async () => {
+    if (window.ethereum) {
+      web3 = new Web3(window.ethereum);
+      await ethereum.request({ method: "eth_requestAccounts" });
+      contract = new web3.eth.Contract(abi, contractAddress);
+      startScanner();
+      alert("Wallet Connected ✅");
+    } else {
+      alert("Install MetaMask!");
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if (id) {
+    document.getElementById("verifyId").value = id;
+    verifyProduct(id);
   }
 });
 
@@ -107,16 +117,22 @@ async function registerProduct() {
   const id = document.getElementById("registerId").value;
   const name = document.getElementById("registerName").value;
   const manufacturer = document.getElementById("registerManufacturer").value;
-  const delivered = document.getElementById("deliveredStatus").value === "true";
 
   try {
-    await contract.methods.registerProduct(id, name, manufacturer)
-      .send({ from: ethereum.selectedAddress });
+    await contract.methods.registerProduct(id, name, manufacturer).send({ from: ethereum.selectedAddress });
     alert("✅ Registered!");
     generateQRCode(id);
   } catch (e) {
     alert("❌ " + e.message);
   }
+}
+
+function generateQRCode(productId) {
+  const url = `https://yourdomain.com/index.html?id=${productId}`;
+  const qr = new QRious({ element: document.getElementById('qrCanvas'), value: url, size: 200 });
+  const downloadLink = document.getElementById("qrDownload");
+  downloadLink.href = qr.toDataURL();
+  downloadLink.style.display = 'inline-block';
 }
 
 async function verifyProduct(passedId = null) {
@@ -130,41 +146,22 @@ async function verifyProduct(passedId = null) {
   }
 }
 
-function generateQRCode(productId) {
-  const url = `https://trivereddy2005.github.io/qr.html?id=${productId}`;
-  const qr = new QRious({
-    element: document.getElementById('qrCanvas'),
-    value: url,
-    size: 200
-  });
-  const downloadLink = document.getElementById("qrDownload");
-  downloadLink.href = qr.toDataURL();
-  downloadLink.style.display = 'inline-block';
-}
-
 function startScanner() {
   scanner = new Html5Qrcode("scanner");
   Html5Qrcode.getCameras().then(cameras => {
     if (cameras.length) {
       currentCameraId = cameras[0].id;
-      scanner.start(
-        currentCameraId,
-        { fps: 10, qrbox: 200 },
-        qrCodeMessage => {
-          document.getElementById("scanResult").innerText = "Scanned: " + qrCodeMessage;
-          try {
-            const url = new URL(qrCodeMessage);
-            const id = url.searchParams.get("id");
-            if (id) {
-              document.getElementById("verifyId").value = id;
-              verifyProduct(id);
-            }
-          } catch (e) {
-            console.log("Not a valid URL");
+      scanner.start(currentCameraId, { fps: 10, qrbox: 200 }, qrCodeMessage => {
+        document.getElementById("scanResult").innerText = "Scanned: " + qrCodeMessage;
+        try {
+          const url = new URL(qrCodeMessage);
+          const id = url.searchParams.get("id");
+          if (id) {
+            document.getElementById("verifyId").value = id;
+            verifyProduct(id);
           }
-        },
-        err => console.log("Scan error:", err)
-      );
+        } catch (e) {}
+      }, err => { console.log("Scan error:", err); });
     }
   });
 }
@@ -197,27 +194,13 @@ function toggleFlash() {
     .then(() => { currentFlashOn = !currentFlashOn; });
 }
 
-function showFraudReports() {
-  const list = document.getElementById("fraudList");
-  list.innerHTML = "";
-  [
-    { id: "123", reason: "Tampered packaging" },
-    { id: "456", reason: "Expired product sold" }
-  ].forEach(report => {
-    const li = document.createElement("li");
-    li.innerText = `Product ID: ${report.id}, Reason: ${report.reason}`;
-    list.appendChild(li);
-  });
+function markDelivered() {
+  alert("✅ Delivery status updated (mock)");
 }
 
-window.onload = () => {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  if (id) {
-    document.getElementById("verifyId").value = id;
-    verifyProduct(id);
-  }
-};
+function markUndelivered() {
+  alert("❌ Marked as not delivered (mock)");
+}
 </script>
 </body>
 </html>
