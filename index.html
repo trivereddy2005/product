@@ -60,73 +60,75 @@
   <section>
     <h2>Scan QR Code</h2>
     <div id="reader" style="width: 300px;"></div>
+    <button id="flashToggle">🔦 Toggle Flashlight</button>
     <div id="scanResult"></div>
   </section>
 
   <script>
     const contractAddress = "0x41c4bbb465494d1141370d1fac8792fbb4e54f03";
-  const contractABI = [
-  {
-    "inputs": [
-      { "internalType": "string", "name": "_productId", "type": "string" },
-      { "internalType": "string", "name": "_name", "type": "string" },
-      { "internalType": "string", "name": "_manufacturer", "type": "string" },
-      { "internalType": "uint256", "name": "_manufactureDate", "type": "uint256" }
-    ],
-    "name": "registerProduct",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-    "name": "verifyProduct",
-    "outputs": [
-      { "internalType": "string", "name": "name", "type": "string" },
-      { "internalType": "string", "name": "manufacturer", "type": "string" },
-      { "internalType": "uint256", "name": "manufactureDate", "type": "uint256" },
-      { "internalType": "bool", "name": "exists", "type": "bool" },
-      { "internalType": "bool", "name": "delivered", "type": "bool" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-    "name": "confirmDelivery",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "string", "name": "_productId", "type": "string" },
-      { "internalType": "string", "name": "_comment", "type": "string" }
-    ],
-    "name": "reportFraud",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
-    "name": "getFraudReports",
-    "outputs": [
+    const contractABI = [
       {
-        "components": [
-          { "internalType": "address", "name": "reporter", "type": "address" },
-          { "internalType": "string", "name": "comment", "type": "string" },
-          { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+        "inputs": [
+          { "internalType": "string", "name": "_productId", "type": "string" },
+          { "internalType": "string", "name": "_name", "type": "string" },
+          { "internalType": "string", "name": "_manufacturer", "type": "string" },
+          { "internalType": "uint256", "name": "_manufactureDate", "type": "uint256" }
         ],
-        "internalType": "struct ProductRegistry.FraudReport[]",
-        "name": "",
-        "type": "tuple[]"
+        "name": "registerProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
+        "name": "verifyProduct",
+        "outputs": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" },
+          { "internalType": "uint256", "name": "manufactureDate", "type": "uint256" },
+          { "internalType": "bool", "name": "exists", "type": "bool" },
+          { "internalType": "bool", "name": "delivered", "type": "bool" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
+        "name": "confirmDelivery",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_productId", "type": "string" },
+          { "internalType": "string", "name": "_comment", "type": "string" }
+        ],
+        "name": "reportFraud",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
+        "name": "getFraudReports",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "address", "name": "reporter", "type": "address" },
+              { "internalType": "string", "name": "comment", "type": "string" },
+              { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+            ],
+            "internalType": "struct ProductRegistry.FraudReport[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
       }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+    ];
+
     let web3, contract, account;
 
     async function connectWallet() {
@@ -145,7 +147,6 @@
       const name = document.getElementById("name").value;
       const mfg = document.getElementById("manufacturer").value;
       const date = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
-
       try {
         await contract.methods.registerProduct(id, name, mfg, date).send({ from: account });
         alert("✅ Product registered!");
@@ -215,16 +216,35 @@
     }
 
     const qrScanner = new Html5Qrcode("reader");
+    let currentCameraId = null;
+    let isTorchOn = false;
+
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length) {
+        const backCam = devices.find(d => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment")) || devices[0];
+        currentCameraId = backCam.id;
+
         qrScanner.start(
-          devices[0].id,
+          currentCameraId,
           { fps: 10, qrbox: 250 },
           qrCodeMessage => {
             document.getElementById("scanResult").innerText = `Scanned: ${qrCodeMessage}`;
           }
-        );
+        ).catch(err => console.error("Failed to start QR scanner", err));
       }
+    });
+
+    document.getElementById("flashToggle").addEventListener("click", () => {
+      if (!qrScanner) return;
+      isTorchOn = !isTorchOn;
+      qrScanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] })
+        .then(() => {
+          document.getElementById("flashToggle").innerText = isTorchOn ? "🔦 Flashlight ON" : "🔦 Flashlight OFF";
+        })
+        .catch(err => {
+          alert("❌ Flashlight not supported.");
+          console.error(err);
+        });
     });
   </script>
 </body>
