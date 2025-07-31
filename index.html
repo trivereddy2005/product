@@ -104,17 +104,22 @@ let web3, contract, userAccount, otpVerified = false;
 
 // --- Login ---
 document.getElementById("loginBtn").onclick = function() {
-  if(document.getElementById("loginUser").value === "user"
-     && document.getElementById("loginPwd").value === "password123") {
+  console.log("Login button clicked");
+  const username = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPwd").value.trim();
+  let m = document.getElementById("loginMsg");
+
+  if(username === "user" && password === "password123") {
+    m.classList.add("hide"); // hide any previous error
     document.getElementById("loginStep").classList.add("hide");
     document.getElementById("walletStep").classList.remove("hide");
   } else {
-    let m=document.getElementById("loginMsg");
-    m.textContent="Invalid username or password.";
-    m.className="status error";
-    m.classList.remove("hide");
+    m.textContent = "Invalid username or password.";
+    m.classList.remove("hide", "success");
+    m.classList.add("error");
   }
 };
+
 // --- Wallet ---
 document.getElementById("connectBtn").onclick = async () => {
   if(!window.ethereum) return alert("Please install MetaMask");
@@ -128,6 +133,7 @@ document.getElementById("connectBtn").onclick = async () => {
     document.getElementById("otpStep").classList.remove("hide");
   }catch(e) { alert("Wallet connection denied."); }
 };
+
 // --- OTP for Registration ---
 document.getElementById("userOtp").oninput = function() {
   document.getElementById("otpBtn").disabled = this.value.trim().length === 0;
@@ -150,6 +156,7 @@ document.getElementById("otpBtn").onclick = async function() {
     m.classList.remove("hide","success"); m.classList.add("error");
   }
 };
+
 // --- Registration ---
 document.getElementById("regForm").onsubmit = async function(e){
   e.preventDefault();
@@ -169,6 +176,7 @@ document.getElementById("regForm").onsubmit = async function(e){
     regMsg.classList.remove("hide","success"); regMsg.classList.add("error");
   }
 };
+
 // --- Product Verification / Delivery ---
 Html5Qrcode.getCameras().then(devs=>{
   if(devs&&devs.length){
@@ -190,7 +198,7 @@ document.getElementById("verifyBtn").onclick = async function() {
     if(r.exists){
       let dt=new Date(r.manufactureDate*1000);
       let status=r.delivered?"✅ Delivered":"⏳ Not Delivered";
-      msg.innerHTML=✅ <b>Product Found</b><br>Name:<b>${r.name}</b><br>Manufacturer:<b>${r.manufacturer}</b><br>Manufacture Date:<b>${dt.toLocaleDateString()}</b><br>Status:<b>${status}</b>;
+      msg.innerHTML=`✅ <b>Product Found</b><br>Name:<b>${r.name}</b><br>Manufacturer:<b>${r.manufacturer}</b><br>Manufacture Date:<b>${dt.toLocaleDateString()}</b><br>Status:<b>${status}</b>`;
       msg.classList.remove("hide","error"); msg.classList.add("success");
       document.getElementById("genDelOtpBtn").disabled=false;
       document.getElementById("confDelBtn").disabled=false;
@@ -204,6 +212,7 @@ document.getElementById("verifyBtn").onclick = async function() {
     msg.classList.remove("hide","success"); msg.classList.add("error");
   }
 };
+
 // --- Delivery OTP generation
 document.getElementById("genDelOtpBtn").onclick = async function() {
   let pid=document.getElementById("verifyId").value.trim();
@@ -213,9 +222,10 @@ document.getElementById("genDelOtpBtn").onclick = async function() {
   let otpHash=web3.utils.keccak256(otp);
   try{
     await contract.methods.generateDeliveryOtp(pid,recipient,otpHash).send({from:userAccount});
-    alert(Delivery OTP: ${otp}\n(Share only with the recipient));
+    alert(`Delivery OTP: ${otp}\n(Share only with the recipient)`);
   }catch(e){alert("Failed. Only contract owner can assign OTP.");}
 };
+
 // --- Delivery confirm (buyer)
 document.getElementById("confDelBtn").onclick = async function(){
   let pid=document.getElementById("verifyId").value.trim();
@@ -226,21 +236,26 @@ document.getElementById("confDelBtn").onclick = async function(){
     alert("Delivery confirmed!");
   }catch(e){alert("Failed: Invalid OTP, not the recipient or already confirmed.");}
 };
+
 // --- Fraud report
 document.getElementById("fraudBtn").onclick = async function(){
   let pid=document.getElementById("verifyId").value.trim();
   let details=document.getElementById("fraudDetails").value.trim();
-  if(!pid||!details){
-    let msg=document.getElementById("fraudMsg");msg.textContent="Product ID & details required.";msg.classList.remove("hide","success");msg.classList.add("error");msg.style.display="block";return;
+  let msg=document.getElementById("fraudMsg");
+  if(!pid || !details){
+    msg.textContent="Product ID & details required.";
+    msg.classList.remove("hide","success");
+    msg.classList.add("error");
+    msg.style.display="block";
+    return;
   }
   try{
     await contract.methods.reportFraud(pid,details).send({from:userAccount});
-    let msg=document.getElementById("fraudMsg");
-    msg.textContent="Fraud reported!";
+    msg.textContent="Fraud reported. Thank you.";
     msg.classList.remove("hide","error");
     msg.classList.add("success");
+    document.getElementById("fraudDetails").value="";
   }catch(e){
-    let msg=document.getElementById("fraudMsg");
     msg.textContent="Failed to report fraud.";
     msg.classList.remove("hide","success");
     msg.classList.add("error");
