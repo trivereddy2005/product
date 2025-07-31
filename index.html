@@ -2,87 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Product Registry</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
-      font-family: Montserrat, Arial, sans-serif;
+      font-family: Montserrat, sans-serif;
       background: linear-gradient(120deg, #e3f0fb, #fde6ea);
       margin: 0;
     }
     main {
-      max-width: 450px;
-      margin: 48px auto 0;
+      max-width: 480px;
+      margin: 50px auto;
       background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 6px 32px #b5b5df1a;
-      padding: 34px 22px;
+      border-radius: 20px;
+      padding: 30px 25px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.1);
     }
     h1 {
-      color: #2f5acf;
       text-align: center;
-      font-weight: 800;
-      margin-bottom: 14px;
+      color: #2f5acf;
+      margin-bottom: 20px;
     }
     label {
       font-weight: 600;
-      margin-top: 16px;
       display: block;
+      margin-top: 15px;
     }
     input, button, textarea {
       width: 100%;
       font-size: 1rem;
-      padding: 11px 14px;
-      margin-top: 7px;
-      margin-bottom: 15px;
+      padding: 10px;
+      margin-top: 8px;
       border-radius: 8px;
-      border: 1.6px solid #bdd4ee;
-      background: #f7f9fc;
+      border: 1.5px solid #cbd5e1;
+      background: #f1f5f9;
       font-family: inherit;
     }
     input:focus, textarea:focus {
-      border-color: #2569ea !important;
+      border-color: #2563eb;
     }
     button {
-      background: #357afa;
-      color: #fff;
+      background: #2563eb;
+      color: white;
       border: none;
-      font-weight: 700;
+      font-weight: bold;
       cursor: pointer;
       margin-top: 14px;
     }
     button:disabled {
-      background: #adc5e2;
+      background: #a5b4fc;
     }
     .message {
-      font-weight: 700;
-      border-radius: 7px;
-      padding: 10px 13px;
-      display: none;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-weight: 600;
     }
     .success {
-      background: #e4fadf;
-      color: #157638;
+      background: #d1fae5;
+      color: #065f46;
     }
     .error {
-      background: #fae4e4;
-      color: #a82c1e;
+      background: #fee2e2;
+      color: #991b1b;
     }
     #qr-reader {
-      margin: 9px auto 12px auto;
+      margin: 12px auto;
+      max-width: 260px;
       width: 100%;
-      max-width: 265px;
     }
     .actions {
       display: flex;
-      gap: 13px;
-      margin-top: 8px;
-    }
-    @media(max-width: 500px){
-      main {padding: 11px 2vw;}
+      flex-direction: column;
+      gap: 10px;
     }
   </style>
 </head>
@@ -90,157 +85,144 @@
 <main>
   <h1>Product Registry</h1>
 
-  <!-- Wallet Connection -->
-  <section id="wallet-section">
-    <button id="wallet-btn">Connect Wallet</button>
-    <span id="wallet-display" style="margin-top:6px;color:#157d3a;font-weight:600;"></span>
-    <div id="wallet-msg" class="message"></div>
-  </section>
+  <!-- Wallet Connect -->
+  <button id="connectBtn">🔗 Connect Wallet</button>
+  <div id="walletDisplay" class="message" style="display:none;"></div>
 
-  <!-- Registration -->
-  <section id="reg-section" style="display:none;">
-    <form id="reg-form" autocomplete="off">
-      <label>Product ID</label><input id="reg-pid" required/>
-      <label>Name</label><input id="reg-name" required/>
-      <label>Manufacturer</label><input id="reg-manuf" required/>
-      <label>Manufacture Date</label><input id="reg-date" type="date" required/>
-      <button type="submit">Register Product</button>
-    </form>
-    <div id="reg-msg" class="message"></div>
-  </section>
+  <!-- Register Product -->
+  <form id="regForm" style="display:none;">
+    <label>Product ID</label><input id="pid" required />
+    <label>Name</label><input id="pname" required />
+    <label>Manufacturer</label><input id="manuf" required />
+    <label>Date</label><input id="mdate" type="date" required />
+    <button type="submit">Register Product</button>
+    <div id="regMsg" class="message" style="display:none;"></div>
+  </form>
 
-  <hr style="margin:23px 0"/>
+  <hr style="margin: 25px 0;"/>
 
-  <!-- Verification & Actions -->
-  <section id="verify-section" style="display:none;">
-    <div id="qr-reader"></div>
-    <label>Verify Product ID</label>
-    <input id="verify-id"/>
-    <button id="verify-btn">Verify Product</button>
-    <div id="verify-msg" class="message"></div>
-    <div class="actions">
-      <button id="conf-del-btn">Confirm Delivery</button>
-    </div>
-    <button id="fraud-btn" style="margin-top:11px;">Report Fraud</button>
-    <textarea id="fraud-details" rows="2" style="margin-top:7px;" placeholder="Describe fraud/problem"></textarea>
-    <div id="fraud-msg" class="message"></div>
-  </section>
+  <!-- Verify Product -->
+  <div id="qr-reader" style="display:none;"></div>
+  <label>Product ID for Verification</label>
+  <input id="verifyId" />
+  <button id="verifyBtn">Verify Product</button>
+  <div id="verifyMsg" class="message" style="display:none;"></div>
+
+  <!-- Delivery Confirmation -->
+  <div class="actions">
+    <button id="confirmBtn">Confirm Delivery</button>
+    <button id="fraudBtn">Report Fraud</button>
+    <textarea id="fraudText" rows="2" placeholder="Describe issue..."></textarea>
+    <div id="fraudMsg" class="message" style="display:none;"></div>
+  </div>
 </main>
 
 <script>
-const contractABI = [/* your ABI goes here */];
-const contractAddress = "0xf42afb57ef2f02974bc56479468dd4c43d0d2460";
-let web3, contract, account;
+  const contractABI = [/* your ABI here */];
+  const contractAddress = "0xf42afb57ef2f02974bc56479468dd4c43d0d2460";
+  let web3, contract, account;
 
-// Connect wallet
-wallet-btn.onclick = async () => {
-  if (!window.ethereum) return alert("MetaMask required.");
-  try {
-    web3 = new Web3(window.ethereum);
-    await ethereum.request({ method: 'eth_requestAccounts' });
-    account = (await web3.eth.getAccounts())[0];
-    contract = new web3.eth.Contract(contractABI, contractAddress);
-    wallet-display.textContent = "Connected: " + account.slice(0, 6) + "..." + account.slice(-4);
-    wallet-section.style.display = "none";
-    reg-section.style.display = "block";
-    verify-section.style.display = "block";
-  } catch {
-    wallet-msg.textContent = "Wallet connection denied.";
-    wallet-msg.className = "message error";
-    wallet-msg.style.display = "block";
-  }
-};
-
-// Register product
-reg-form.onsubmit = async e => {
-  e.preventDefault();
-  const pid = reg-pid.value.trim();
-  const name = reg-name.value.trim();
-  const manuf = reg-manuf.value.trim();
-  const date = Math.floor(new Date(reg-date.value).getTime() / 1000);
-  try {
-    await contract.methods.registerProduct(pid, name, manuf, date).send({ from: account });
-    reg-msg.textContent = "Product registered!";
-    reg-msg.className = "message success";
-    reg-form.reset();
-  } catch {
-    reg-msg.textContent = "Registration failed.";
-    reg-msg.className = "message error";
-  }
-  reg-msg.style.display = "block";
-};
-
-verify-id.oninput = () => verify-btn.disabled = verify-id.value.trim() === "";
-
-// QR scanner
-try {
-  Html5Qrcode.getCameras().then(devices => {
-    if (devices.length) {
-      const qr = new Html5Qrcode("qr-reader");
-      qr.start(
-        { deviceId: { exact: devices[0].id } },
-        { fps: 10, qrbox: 210 },
-        decoded => {
-          verify-id.value = decoded;
-          verify-btn.disabled = false;
-        }
-      );
+  document.getElementById('connectBtn').onclick = async () => {
+    if (typeof window.ethereum === 'undefined') {
+      alert("Install MetaMask to continue.");
+      return;
     }
-  });
-} catch {}
-
-// Verify product
-verify-btn.onclick = async () => {
-  const pid = verify-id.value.trim();
-  try {
-    const r = await contract.methods.verifyProduct(pid).call();
-    if (!r.exists) {
-      verify-msg.textContent = "Product not found.";
-      verify-msg.className = "message error";
-    } else {
-      const dt = new Date(r.manufactureDate * 1000);
-      const status = r.delivered ? "✅ Delivered" : "⏳ Not Delivered";
-      verify-msg.innerHTML = `<b>${r.name}</b><br>Manufacturer: <b>${r.manufacturer}</b><br>Manufactured: <b>${dt.toLocaleDateString()}</b><br>Status: <b>${status}</b>`;
-      verify-msg.className = "message success";
+    try {
+      web3 = new Web3(window.ethereum);
+      await ethereum.request({ method: 'eth_requestAccounts' });
+      account = (await web3.eth.getAccounts())[0];
+      contract = new web3.eth.Contract(contractABI, contractAddress);
+      document.getElementById("walletDisplay").style.display = "block";
+      document.getElementById("walletDisplay").textContent = "Connected: " + account;
+      document.getElementById("regForm").style.display = "block";
+      document.getElementById("qr-reader").style.display = "block";
+      setupQRScanner();
+    } catch (err) {
+      alert("Connection failed.");
     }
-  } catch {
-    verify-msg.textContent = "Verification failed.";
-    verify-msg.className = "message error";
-  }
-  verify-msg.style.display = "block";
-};
+  };
 
-// Confirm delivery
-conf-del-btn.onclick = async () => {
-  const pid = verify-id.value.trim();
-  try {
-    await contract.methods.confirmDelivery(pid).send({ from: account });
-    alert("Delivery confirmed!");
-  } catch {
-    alert("Failed to confirm delivery.");
-  }
-};
+  document.getElementById('regForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const pid = pid.value.trim();
+    const name = pname.value.trim();
+    const manuf = manuf.value.trim();
+    const date = Math.floor(new Date(mdate.value).getTime() / 1000);
+    try {
+      await contract.methods.registerProduct(pid, name, manuf, date).send({ from: account });
+      showMsg("regMsg", "Product registered!", true);
+      regForm.reset();
+    } catch (err) {
+      showMsg("regMsg", "Registration failed.", false);
+    }
+  };
 
-// Report fraud
-fraud-btn.onclick = async () => {
-  const pid = verify-id.value.trim();
-  const details = fraud-details.value.trim();
-  if (!pid || !details) {
-    fraud-msg.textContent = "Product ID and details required.";
-    fraud-msg.className = "message error";
-    fraud-msg.style.display = "block";
-    return;
+  document.getElementById("verifyBtn").onclick = async () => {
+    const pid = verifyId.value.trim();
+    try {
+      const data = await contract.methods.verifyProduct(pid).call();
+      if (!data.exists) {
+        showMsg("verifyMsg", "Product not found.", false);
+      } else {
+        const date = new Date(data.manufactureDate * 1000).toLocaleDateString();
+        const delivered = data.delivered ? "✅ Delivered" : "❌ Not Delivered";
+        const text = `Name: ${data.name}\nManufacturer: ${data.manufacturer}\nDate: ${date}\nStatus: ${delivered}`;
+        showMsg("verifyMsg", text, true);
+      }
+    } catch {
+      showMsg("verifyMsg", "Verification failed.", false);
+    }
+  };
+
+  document.getElementById("confirmBtn").onclick = async () => {
+    const pid = verifyId.value.trim();
+    try {
+      await contract.methods.confirmDelivery(pid).send({ from: account });
+      alert("Delivery confirmed!");
+    } catch {
+      alert("Delivery confirmation failed.");
+    }
+  };
+
+  document.getElementById("fraudBtn").onclick = async () => {
+    const pid = verifyId.value.trim();
+    const text = fraudText.value.trim();
+    if (!pid || !text) {
+      showMsg("fraudMsg", "Enter Product ID and description.", false);
+      return;
+    }
+    try {
+      await contract.methods.reportFraud(pid, text).send({ from: account });
+      showMsg("fraudMsg", "Fraud reported!", true);
+    } catch {
+      showMsg("fraudMsg", "Reporting failed.", false);
+    }
+  };
+
+  function showMsg(id, msg, success = true) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = success ? "message success" : "message error";
+    el.style.display = "block";
   }
-  try {
-    await contract.methods.reportFraud(pid, details).send({ from: account });
-    fraud-msg.textContent = "Fraud reported!";
-    fraud-msg.className = "message success";
-  } catch {
-    fraud-msg.textContent = "Failed to report fraud.";
-    fraud-msg.className = "message error";
+
+  async function setupQRScanner() {
+    try {
+      const devices = await Html5Qrcode.getCameras();
+      if (devices.length) {
+        const scanner = new Html5Qrcode("qr-reader");
+        scanner.start(
+          { deviceId: { exact: devices[0].id } },
+          { fps: 10, qrbox: 200 },
+          qrCode => {
+            document.getElementById("verifyId").value = qrCode;
+          }
+        );
+      }
+    } catch (e) {
+      console.log("QR scan error", e);
+    }
   }
-  fraud-msg.style.display = "block";
-};
 </script>
 </body>
 </html>
