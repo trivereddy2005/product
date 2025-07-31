@@ -2,104 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Registry dApp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 20px;
-    }
-    h1, h2 {
-      color: #333;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 30px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      max-width: 600px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 15px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #message, #verifyResult, #error {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #qr-reader {
-      width: 100%;
-      max-width: 400px;
-      margin-top: 10px;
-    }
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    h2 { margin-top: 30px; }
+    form { background: white; padding: 15px; margin-top: 10px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 10px; }
+    input, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #message, #error, #verifyResult { margin-top: 10px; }
+    #reader { width: 100%; max-width: 400px; margin-top: 10px; }
   </style>
 </head>
 <body>
 
   <h1>Product Registry dApp</h1>
-  <button onclick="connectWallet()">Connect MetaMask</button>
+  <button onclick="connectWallet()">🔌 Connect MetaMask</button>
   <div id="walletAddress"></div>
 
   <!-- QR Code Scanner -->
-  <h2>Scan Product QR</h2>
-  <div id="qr-reader"></div>
-  <div>Scanned Product ID: <span id="scannedId"></span></div>
+  <h2>📷 Scan Product QR</h2>
+  <div id="reader"></div>
+  <button onclick="startScanner()">Start Scanner</button>
+  <button onclick="stopScanner()">Stop Scanner</button>
 
-  <!-- Register Product -->
+  <!-- Product Registration -->
+  <h2>📝 Register Product</h2>
   <form id="registerForm">
-    <h2>Register Product</h2>
     <label>Product ID</label>
-    <input type="text" id="productId" required />
+    <input type="text" id="productId" required>
 
-    <label>Name</label>
-    <input type="text" id="name" required />
+    <label>Product Name</label>
+    <input type="text" id="name" required>
 
     <label>Manufacturer</label>
-    <input type="text" id="manufacturer" required />
+    <input type="text" id="manufacturer" required>
 
     <label>Manufacture Date</label>
-    <input type="date" id="manufactureDate" required />
+    <input type="date" id="manufactureDate" required>
 
-    <button type="submit">Register Product</button>
+    <button type="submit">Register</button>
     <div id="message"></div>
+    <div id="error"></div>
   </form>
 
-  <!-- Verify Product -->
+  <!-- Product Verification -->
+  <h2>🔍 Verify Product</h2>
   <form id="verifyForm">
-    <h2>Verify Product</h2>
-    <label>Product ID</label>
-    <input type="text" id="verifyId" required />
+    <label>Enter Product ID</label>
+    <input type="text" id="verifyProductId" required>
     <button type="submit">Verify</button>
     <div id="verifyResult"></div>
   </form>
 
-  <!-- Report Fraud -->
+  <!-- Fraud Reporting -->
+  <h2>🚨 Report Fraud</h2>
   <form id="fraudForm">
-    <h2>Report Fraud</h2>
     <label>Product ID</label>
-    <input type="text" id="fraudId" required />
+    <input type="text" id="fraudProductId" required>
 
     <label>Comment</label>
     <textarea id="fraudComment" required></textarea>
@@ -109,131 +73,150 @@
   </form>
 
   <script>
-    const contractAddress = "0x3b83Ed88b0F8c0A8CEb3C2A6b248d1FdD2619F81"; // Replace this
+    let web3;
+    let contract;
+    let html5QrCode;
+
+    const contractAddress = "0x3b83ed88b0f8c0a8ceb3c2a6b248d1fdd2619f81"; // <-- Replace this
     const contractABI = [
       {
-        "inputs":[
-          {"internalType":"string","name":"_productId","type":"string"},
-          {"internalType":"string","name":"_name","type":"string"},
-          {"internalType":"string","name":"_manufacturer","type":"string"},
-          {"internalType":"uint256","name":"_manufactureDate","type":"uint256"}
+        "inputs": [
+          { "internalType": "string", "name": "_productId", "type": "string" },
+          { "internalType": "string", "name": "_name", "type": "string" },
+          { "internalType": "string", "name": "_manufacturer", "type": "string" },
+          { "internalType": "uint256", "name": "_manufactureDate", "type": "uint256" }
         ],
-        "name":"registerProduct",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
+        "name": "registerProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
-        "inputs":[{"internalType":"string","name":"_productId","type":"string"}],
-        "name":"verifyProduct",
-        "outputs":[
-          {"internalType":"string","name":"name","type":"string"},
-          {"internalType":"string","name":"manufacturer","type":"string"},
-          {"internalType":"uint256","name":"manufactureDate","type":"uint256"},
-          {"internalType":"bool","name":"exists","type":"bool"},
-          {"internalType":"bool","name":"delivered","type":"bool"}
+        "inputs": [{ "internalType": "string", "name": "_productId", "type": "string" }],
+        "name": "verifyProduct",
+        "outputs": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" },
+          { "internalType": "uint256", "name": "manufactureDate", "type": "uint256" },
+          { "internalType": "bool", "name": "exists", "type": "bool" },
+          { "internalType": "bool", "name": "delivered", "type": "bool" }
         ],
-        "stateMutability":"view",
-        "type":"function"
+        "stateMutability": "view",
+        "type": "function"
       },
       {
-        "inputs":[
-          {"internalType":"string","name":"_productId","type":"string"},
-          {"internalType":"string","name":"_comment","type":"string"}
+        "inputs": [
+          { "internalType": "string", "name": "_productId", "type": "string" },
+          { "internalType": "string", "name": "_comment", "type": "string" }
         ],
-        "name":"reportFraud",
-        "outputs":[],
-        "stateMutability":"nonpayable",
-        "type":"function"
+        "name": "reportFraud",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       }
     ];
 
-    let web3, contract;
-
     async function connectWallet() {
       if (window.ethereum) {
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        web3 = new Web3(window.ethereum);
-        const accounts = await web3.eth.getAccounts();
-        document.getElementById("walletAddress").innerText = "Connected: " + accounts[0];
-        contract = new web3.eth.Contract(contractABI, contractAddress);
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          web3 = new Web3(window.ethereum);
+          const accounts = await web3.eth.getAccounts();
+          document.getElementById("walletAddress").innerText = "Connected: " + accounts[0];
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+        } catch (err) {
+          alert("Wallet connection rejected.");
+        }
       } else {
-        alert("Install MetaMask to use this app.");
+        alert("MetaMask not found.");
       }
     }
 
-    document.getElementById("registerForm").onsubmit = async (e) => {
+    document.getElementById("registerForm").onsubmit = async function(e) {
       e.preventDefault();
-      const pid = document.getElementById("productId").value;
+      const productId = document.getElementById("productId").value;
       const name = document.getElementById("name").value;
       const manufacturer = document.getElementById("manufacturer").value;
-      const mfgDate = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
+      const manufactureDate = Math.floor(new Date(document.getElementById("manufactureDate").value).getTime() / 1000);
 
       try {
         const accounts = await web3.eth.getAccounts();
-        await contract.methods.registerProduct(pid, name, manufacturer, mfgDate).send({ from: accounts[0] });
-        document.getElementById("message").innerText = "✅ Registered!";
+        await contract.methods.registerProduct(productId, name, manufacturer, manufactureDate)
+          .send({ from: accounts[0] });
+
+        document.getElementById("message").innerText = "✅ Registered successfully!";
+        document.getElementById("error").innerText = "";
       } catch (err) {
-        document.getElementById("message").innerText = "❌ Error: " + err.message;
+        if (err.message.includes("User denied transaction")) {
+          document.getElementById("error").innerText = "❌ Transaction rejected by user.";
+        } else {
+          document.getElementById("error").innerText = "❌ Error: " + err.message;
+        }
+        document.getElementById("message").innerText = "";
       }
     };
 
-    document.getElementById("verifyForm").onsubmit = async (e) => {
+    document.getElementById("verifyForm").onsubmit = async function(e) {
       e.preventDefault();
-      const pid = document.getElementById("verifyId").value;
+      const pid = document.getElementById("verifyProductId").value;
       try {
-        const result = await contract.methods.verifyProduct(pid).call();
-        if (!result.exists) {
-          document.getElementById("verifyResult").innerText = "❌ Product not found.";
+        const data = await contract.methods.verifyProduct(pid).call();
+        if (data.exists) {
+          const dateStr = new Date(data.manufactureDate * 1000).toLocaleDateString();
+          document.getElementById("verifyResult").innerHTML =
+            `✅ Product Found<br>
+            Name: ${data.name}<br>
+            Manufacturer: ${data.manufacturer}<br>
+            Date: ${dateStr}<br>
+            Delivered: ${data.delivered ? 'Yes' : 'No'}`;
         } else {
-          const date = new Date(result.manufactureDate * 1000).toLocaleDateString();
-          document.getElementById("verifyResult").innerText =
-            `✔️ ${result.name} by ${result.manufacturer} | Date: ${date} | Delivered: ${result.delivered}`;
+          document.getElementById("verifyResult").innerText = "❌ Product not found.";
         }
       } catch (err) {
         document.getElementById("verifyResult").innerText = "❌ Error: " + err.message;
       }
     };
 
-    document.getElementById("fraudForm").onsubmit = async (e) => {
+    document.getElementById("fraudForm").onsubmit = async function(e) {
       e.preventDefault();
-      const pid = document.getElementById("fraudId").value;
+      const pid = document.getElementById("fraudProductId").value;
       const comment = document.getElementById("fraudComment").value;
       try {
         const accounts = await web3.eth.getAccounts();
         await contract.methods.reportFraud(pid, comment).send({ from: accounts[0] });
-        document.getElementById("fraudMessage").innerText = "🚨 Fraud reported!";
+        document.getElementById("fraudMessage").innerText = "✅ Fraud reported.";
       } catch (err) {
         document.getElementById("fraudMessage").innerText = "❌ Error: " + err.message;
       }
     };
 
-    // QR Scanner
-    const qrRegion = document.getElementById("qr-reader");
-    const html5QrCode = new Html5Qrcode("qr-reader");
-
-    function startQRScanner() {
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("reader");
       Html5Qrcode.getCameras().then(cameras => {
-        if (cameras.length) {
+        if (cameras && cameras.length) {
           html5QrCode.start(
             cameras[0].id,
             { fps: 10, qrbox: 250 },
-            (decodedText) => {
-              document.getElementById("productId").value = decodedText;
-              document.getElementById("verifyId").value = decodedText;
-              document.getElementById("fraudId").value = decodedText;
-              document.getElementById("scannedId").innerText = decodedText;
-              html5QrCode.stop(); // stop after one scan
+            qrCodeMessage => {
+              document.getElementById("productId").value = qrCodeMessage;
+              document.getElementById("verifyProductId").value = qrCodeMessage;
+              document.getElementById("fraudProductId").value = qrCodeMessage;
+              stopScanner();
             },
-            (err) => {}
+            error => {}
           );
         }
       }).catch(err => {
-        console.error("Camera error:", err);
+        alert("Camera access denied or not found.");
       });
     }
 
-    window.addEventListener("load", startQRScanner);
+    function stopScanner() {
+      if (html5QrCode) html5QrCode.stop().then(() => {
+        html5QrCode.clear();
+      });
+    }
   </script>
+
 </body>
 </html>
