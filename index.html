@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Product Registry Demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<style>
-body {font-family:Montserrat,Arial,sans-serif; background:linear-gradient(120deg,#e3f0fb,#fde6ea); margin:0;}
-main {max-width:450px;margin:48px auto 0;background:#fff;border-radius:18px;box-shadow:0 6px 32px #b5b5df1a;padding:34px 22px;}
-h1{color:#2f5acf;text-align:center;font-weight:800;margin-bottom:14px;}
-label{font-weight:600;margin-top:16px;display:block;}
-input,button,textarea{width:100%;font-size:1rem;padding:11px 14px;margin-top:7px;margin-bottom:15px;
-border-radius:8px;border:1.6px solid #bdd4ee;background:#f7f9fc;font-family:inherit;}
-input:focus,textarea:focus{border-color:#2569ea!important;}
-button{background:#357afa;color:#fff;border:none;font-weight:700;cursor:pointer;margin-top:14px;}
-button:disabled{background:#adc5e2;}
-.message{font-weight:700;border-radius:7px;padding:10px 13px;display:none;}
-.success{background:#e4fadf;color:#157638;}
-.error{background:#fae4e4;color:#a82c1e;}
-#qr-reader{margin:9px auto 12px auto;width:100%;max-width:265px;}
-.actions{display:flex;gap:13px;margin-top:8px;}
-@media(max-width:500px){main{padding:11px 2vw;}}
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Product Registry Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {font-family: Montserrat, Arial, sans-serif; background: linear-gradient(120deg, #e3f0fb, #fde6ea); margin: 0;}
+    main {max-width: 450px; margin: 48px auto 0; background: #fff; border-radius: 18px; box-shadow: 0 6px 32px #b5b5df1a; padding: 34px 22px;}
+    h1 {color: #2f5acf; text-align: center; font-weight: 800; margin-bottom: 14px;}
+    label {font-weight: 600; margin-top: 16px; display: block;}
+    input, button, textarea {
+      width: 100%; font-size: 1rem; padding: 11px 14px; margin-top: 7px; margin-bottom: 15px;
+      border-radius: 8px; border: 1.6px solid #bdd4ee; background: #f7f9fc; font-family: inherit;
+    }
+    input:focus, textarea:focus {border-color: #2569ea!important;}
+    button {background: #357afa; color: #fff; border: none; font-weight: 700; cursor: pointer; margin-top: 14px;}
+    button:disabled {background: #adc5e2;}
+    .message {font-weight: 700; border-radius: 7px; padding: 10px 13px; display: none;}
+    .success {background: #e4fadf; color: #157638;}
+    .error {background: #fae4e4; color: #a82c1e;}
+    #qr-reader {margin: 9px auto 12px auto; width: 100%; max-width: 265px;}
+    .actions {display: flex; gap: 13px; margin-top: 8px;}
+    @media(max-width: 500px){main{padding: 11px 2vw;}}
+  </style>
 </head>
 <body>
 <main>
   <h1>Product Registry</h1>
+
   <!-- Step 1: Login -->
   <section id="login-section">
     <label>Username</label>
@@ -37,12 +40,14 @@ button:disabled{background:#adc5e2;}
     <button id="login-btn">Login</button>
     <div id="login-msg" class="message"></div>
   </section>
+
   <!-- Step 2: Wallet -->
   <section id="wallet-section" style="display:none;">
     <button id="wallet-btn">Connect Wallet</button>
     <span id="wallet-display" style="margin-top:6px;color:#157d3a;font-weight:600;"></span>
     <div id="wallet-msg" class="message"></div>
   </section>
+
   <!-- Step 3: OTP -->
   <section id="otp-section" style="display:none;">
     <label>Registration OTP</label>
@@ -50,6 +55,7 @@ button:disabled{background:#adc5e2;}
     <button id="otp-btn" disabled>Verify OTP</button>
     <div id="otp-msg" class="message"></div>
   </section>
+
   <!-- Step 4: Registration -->
   <section id="reg-section" style="display:none;">
     <form id="reg-form" autocomplete="off">
@@ -61,7 +67,9 @@ button:disabled{background:#adc5e2;}
     </form>
     <div id="reg-msg" class="message"></div>
   </section>
+
   <hr style="margin:23px 0"/>
+
   <!-- Step 5: Verification & Actions -->
   <section id="verify-section" style="display:none;">
     <div id="qr-reader"></div>
@@ -78,9 +86,10 @@ button:disabled{background:#adc5e2;}
     <div id="fraud-msg" class="message"></div>
   </section>
 </main>
+
 <script>
+// Place your contract ABI & address here
 const contractABI = [
-	[
 	{
 		"inputs": [
 			{
@@ -381,26 +390,27 @@ const contractABI = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
 ];
-const contractAddress = "0xf42afb57ef2f02974bc56479468dd4c43d0d2460"; // <-- Replace this!
+const contractAddress = "0xf42afb57ef2f02974bc56479468dd4c43d0d2460";
+
 let web3, contract, account, otpVerified = false;
-// --- LOGIN ---
+
 document.getElementById("login-btn").onclick = () => {
-  if(document.getElementById("login-user").value === "user" &&
-    document.getElementById("login-pass").value === "password123") {
+  const user = document.getElementById("login-user").value.trim();
+  const pass = document.getElementById("login-pass").value.trim();
+  const msg = document.getElementById("login-msg");
+  if(user === "user" && pass === "password123") {
     document.getElementById("login-section").style.display = "none";
     document.getElementById("wallet-section").style.display = "block";
   } else {
-    let m = document.getElementById("login-msg");
-    m.textContent = "Invalid username or password!";
-    m.className = "message error";
-    m.style.display = "block";
+    msg.textContent = "Invalid username or password!";
+    msg.className = "message error";
+    msg.style.display = "block";
   }
 };
-// --- WALLET ---
+
 document.getElementById("wallet-btn").onclick = async () => {
-  if(!window.ethereum) return alert("MetaMask required");
+  if (!window.ethereum) return alert("MetaMask required.");
   try {
     web3 = new Web3(window.ethereum);
     await ethereum.request({ method: 'eth_requestAccounts' });
@@ -409,133 +419,154 @@ document.getElementById("wallet-btn").onclick = async () => {
     document.getElementById("wallet-display").textContent = "Connected: "+account.slice(0,6)+"..."+account.slice(-4);
     document.getElementById("wallet-section").style.display = "none";
     document.getElementById("otp-section").style.display = "block";
-    document.getElementById("otp-btn").disabled = true;
   } catch {
-    let m=document.getElementById("wallet-msg");
-    m.textContent = "Wallet connection denied."; m.className = "message error"; m.style.display = "block";
+    const m = document.getElementById("wallet-msg");
+    m.textContent = "Wallet connection denied.";
+    m.className = "message error";
+    m.style.display = "block";
   }
 };
-// --- OTP ---
+
 document.getElementById("otp-input").oninput = function () {
   document.getElementById("otp-btn").disabled = this.value.trim() === "";
   document.getElementById("otp-msg").style.display = "none";
 };
-document.getElementById("otp-btn").onclick = async function(){
-  let otp = document.getElementById("otp-input").value.trim();
-  let m = document.getElementById("otp-msg");
+
+document.getElementById("otp-btn").onclick = async function () {
+  const otp = document.getElementById("otp-input").value.trim();
+  const m = document.getElementById("otp-msg");
   m.style.display = "block";
   try {
     await contract.methods.verifyUser(otp).send({ from: account });
+    otpVerified = true;
     document.getElementById("otp-section").style.display = "none";
     document.getElementById("reg-section").style.display = "block";
     document.getElementById("verify-section").style.display = "block";
-    otpVerified = true;
-    m.textContent="OTP verified! Registration unlocked.";
-    m.className="message success";
+    m.textContent = "OTP verified! Registration unlocked.";
+    m.className = "message success";
   } catch {
-    m.textContent="Invalid OTP or not issued for your wallet.";
-    m.className="message error";
+    m.textContent = "Invalid OTP or not issued for your wallet.";
+    m.className = "message error";
   }
 };
-// --- REGISTRATION ---
-document.getElementById("reg-form").onsubmit = async function (e) {
+
+document.getElementById("reg-form").onsubmit = async function(e) {
   e.preventDefault();
-  if(!otpVerified) return alert("Verify OTP first.");
-  let pid=document.getElementById("reg-pid").value.trim();
-  let name=document.getElementById("reg-name").value.trim();
-  let manuf=document.getElementById("reg-manuf").value.trim();
-  let date=Math.floor(new Date(document.getElementById("reg-date").value).getTime()/1000);
-  let m=document.getElementById("reg-msg");
-  m.style.display="block";
-  try{
-    await contract.methods.registerProduct(pid, name, manuf, date).send({from:account});
-    m.textContent="Product registered!";
-    m.className="message success";
+  if (!otpVerified) return alert("Verify OTP first.");
+  const pid = document.getElementById("reg-pid").value.trim();
+  const name = document.getElementById("reg-name").value.trim();
+  const manuf = document.getElementById("reg-manuf").value.trim();
+  const date = Math.floor(new Date(document.getElementById("reg-date").value).getTime() / 1000);
+  const m = document.getElementById("reg-msg");
+  try {
+    await contract.methods.registerProduct(pid, name, manuf, date).send({ from: account });
+    m.textContent = "Product registered!";
+    m.className = "message success";
     this.reset();
-  }catch{
-    m.textContent="Registration failed. Only owner/verified can register.";
-    m.className="message error";
+  } catch {
+    m.textContent = "Registration failed. Only owner/verified can register.";
+    m.className = "message error";
   }
+  m.style.display = "block";
 };
-// --- VERIFY PRODUCT ---
+
 document.getElementById("verify-id").oninput = function() {
   document.getElementById("verify-btn").disabled = this.value.trim() === "";
 };
-try{
-  Html5Qrcode.getCameras().then(devs=>{
-    if(devs&&devs.length){
-      let qr=new Html5Qrcode("qr-reader");
-      qr.start({deviceId:{exact:devs[0].id}}, {fps:10,qrbox:210}, decoded=>{
-        document.getElementById("verify-id").value=decoded;
-        document.getElementById("verify-btn").disabled=false;
-      }, err=>{});
+
+try {
+  Html5Qrcode.getCameras().then(devs => {
+    if (devs && devs.length) {
+      const qr = new Html5Qrcode("qr-reader");
+      qr.start({ deviceId: { exact: devs[0].id } }, { fps: 10, qrbox: 210 }, decoded => {
+        document.getElementById("verify-id").value = decoded;
+        document.getElementById("verify-btn").disabled = false;
+      });
     }
   });
-}catch{}
-document.getElementById("verify-btn").onclick = async function(){
-  let pid=document.getElementById("verify-id").value.trim();
-  let m=document.getElementById("verify-msg");
-  m.style.display="block";
-  try{
-    let r=await contract.methods.verifyProduct(pid).call();
-    if(!r.exists) {
-      m.textContent="Product not found.";
-      m.className="message error";
-      document.getElementById("gen-del-otp-btn").disabled=true;
-      document.getElementById("conf-del-btn").disabled=true;
-      document.getElementById("fraud-btn").disabled=true;
-      return;
+} catch {}
+
+document.getElementById("verify-btn").onclick = async function () {
+  const pid = document.getElementById("verify-id").value.trim();
+  const m = document.getElementById("verify-msg");
+  try {
+    const r = await contract.methods.verifyProduct(pid).call();
+    if (!r.exists) {
+      m.textContent = "Product not found.";
+      m.className = "message error";
+      disableVerifyActions();
+    } else {
+      const dt = new Date(r.manufactureDate * 1000);
+      const dstatus = r.delivered ? "✅ Delivered" : "⏳ Not Delivered";
+      m.innerHTML = `<b>${r.name}</b><br>Manufacturer: <b>${r.manufacturer}</b><br>Manufactured: <b>${dt.toLocaleDateString()}</b><br>Status: <b>${dstatus}</b>`;
+      m.className = "message success";
+      enableVerifyActions();
     }
-    let dt=new Date(r.manufactureDate*1000);
-    let dstatus=r.delivered?"✅ Delivered":"⏳ Not Delivered";
-    m.innerHTML=<b>${r.name}</b><br>Manufacturer: <b>${r.manufacturer}</b><br>Manufactured: <b>${dt.toLocaleDateString()}</b><br>Status: <b>${dstatus}</b>;
-    m.className="message success";
-    document.getElementById("gen-del-otp-btn").disabled = false;
-    document.getElementById("conf-del-btn").disabled = false;
-    document.getElementById("fraud-btn").disabled = false;
-  }catch{
-    m.textContent="Verification failed";
-    m.className="message error";
+  } catch {
+    m.textContent = "Verification failed.";
+    m.className = "message error";
+    disableVerifyActions();
   }
+  m.style.display = "block";
 };
-// --- DeliveryOTP GENERATE ---
-document.getElementById("gen-del-otp-btn").onclick = async function(){
-  let pid=document.getElementById("verify-id").value.trim();
-  let recipient=prompt("Enter recipient wallet address:");
-  if(!recipient)return;
-  let otp=String(Math.floor(100000+Math.random()*900000));
-  let hash=web3.utils.keccak256(otp);
-  try{
-    await contract.methods.generateDeliveryOtp(pid,recipient,hash).send({from:account});
-    alert("Delivery OTP: "+otp+"\nShare ONLY with the recipient.");
-  }catch{
+
+function enableVerifyActions() {
+  document.getElementById("gen-del-otp-btn").disabled = false;
+  document.getElementById("conf-del-btn").disabled = false;
+  document.getElementById("fraud-btn").disabled = false;
+}
+
+function disableVerifyActions() {
+  document.getElementById("gen-del-otp-btn").disabled = true;
+  document.getElementById("conf-del-btn").disabled = true;
+  document.getElementById("fraud-btn").disabled = true;
+}
+
+document.getElementById("gen-del-otp-btn").onclick = async function () {
+  const pid = document.getElementById("verify-id").value.trim();
+  const recipient = prompt("Enter recipient wallet address:");
+  if (!recipient) return;
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const hash = web3.utils.keccak256(otp);
+  try {
+    await contract.methods.generateDeliveryOtp(pid, recipient, hash).send({ from: account });
+    alert("Delivery OTP: " + otp + "\nShare ONLY with the recipient.");
+  } catch {
     alert("Failed. Only contract owner can assign Delivery OTP.");
   }
 };
-// --- Delivery Confirm (Buyer) ---
-document.getElementById("conf-del-btn").onclick = async function(){
-  let pid=document.getElementById("verify-id").value.trim();
-  let otp=prompt("Enter delivery OTP:");
-  if(!otp)return;
-  try{
-    await contract.methods.confirmDelivery(pid,otp).send({from:account});
+
+document.getElementById("conf-del-btn").onclick = async function () {
+  const pid = document.getElementById("verify-id").value.trim();
+  const otp = prompt("Enter delivery OTP:");
+  if (!otp) return;
+  try {
+    await contract.methods.confirmDelivery(pid, otp).send({ from: account });
     alert("Delivery confirmed!");
-  }catch{
+  } catch {
     alert("Failed: Invalid OTP or unauthorized.");
   }
 };
-// --- Fraud report ---
-document.getElementById("fraud-btn").onclick = async function(){
-  let pid=document.getElementById("verify-id").value.trim();
-  let details=document.getElementById("fraud-details").value.trim();
-  let m=document.getElementById("fraud-msg");
-  if(!pid||!details){m.style.display="block";m.textContent="Product ID and details required";m.className="message error";return;}
-  try{
-    await contract.methods.reportFraud(pid,details).send({from:account});
-    m.style.display="block";m.textContent="Fraud reported!";m.className="message success";
-  }catch{
-    m.style.display="block";m.textContent="Failed to report fraud.";m.className="message error";
+
+document.getElementById("fraud-btn").onclick = async function () {
+  const pid = document.getElementById("verify-id").value.trim();
+  const details = document.getElementById("fraud-details").value.trim();
+  const m = document.getElementById("fraud-msg");
+  if (!pid || !details) {
+    m.textContent = "Product ID and details required.";
+    m.className = "message error";
+    m.style.display = "block";
+    return;
   }
+  try {
+    await contract.methods.reportFraud(pid, details).send({ from: account });
+    m.textContent = "Fraud reported!";
+    m.className = "message success";
+  } catch {
+    m.textContent = "Failed to report fraud.";
+    m.className = "message error";
+  }
+  m.style.display = "block";
 };
 </script>
 </body>
