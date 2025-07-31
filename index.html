@@ -100,6 +100,8 @@
       <input id="fraudProductId" placeholder="Product ID for Report" />
       <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3"></textarea>
       <button onclick="reportFraud()">🚨 Submit Report</button>
+      <input id="searchFraudId" placeholder="Search by Product ID" />
+      <button onclick="searchFraudReports()">🔍 Search Reports</button>
       <div id="fraudReports">No reports available.</div>
     </section>
 
@@ -250,11 +252,21 @@ function reportFraud() {
   const desc = document.getElementById("fraudDescription").value;
   if (id && desc.trim() !== "") {
     frauds.push({ id, desc });
-    document.getElementById("fraudReports").innerHTML =
-      frauds.map((f, i) => `<p><strong>#${i + 1}</strong> (ID: ${f.id}): ${f.desc}</p>`).join('');
+    updateFraudDisplay(frauds);
     document.getElementById("fraudProductId").value = "";
     document.getElementById("fraudDescription").value = "";
   }
+}
+
+function searchFraudReports() {
+  const searchId = document.getElementById("searchFraudId").value.trim();
+  const results = frauds.filter(f => f.id === searchId);
+  updateFraudDisplay(results);
+}
+
+function updateFraudDisplay(data) {
+  document.getElementById("fraudReports").innerHTML =
+    data.length > 0 ? data.map((f, i) => `<p><strong>#${i + 1}</strong> (ID: ${f.id}): ${f.desc}</p>`).join('') : "No reports available.";
 }
 </script>
 </body>
