@@ -415,21 +415,33 @@
 
   document.getElementById('regForm').onsubmit = async (e) => {
     e.preventDefault();
-    const pid = pid.value.trim();
-    const name = pname.value.trim();
-    const manuf = manuf.value.trim();
-    const date = Math.floor(new Date(mdate.value).getTime() / 1000);
+
+    const pid = document.getElementById("pid").value.trim();
+    const name = document.getElementById("pname").value.trim();
+    const manuf = document.getElementById("manuf").value.trim();
+    const dateInput = document.getElementById("mdate").value;
+
+    if (!pid || !name || !manuf || !dateInput) {
+      showMsg("regMsg", "Please fill all fields.", false);
+      return;
+    }
+
+    const date = Math.floor(new Date(dateInput).getTime() / 1000);
+
     try {
-      await contract.methods.registerProduct(pid, name, manuf, date).send({ from: account });
+      await contract.methods
+        .registerProduct(pid, name, manuf, date)
+        .send({ from: account });
       showMsg("regMsg", "Product registered!", true);
-      regForm.reset();
+      document.getElementById("regForm").reset();
     } catch (err) {
+      console.error("Registration error:", err);
       showMsg("regMsg", "Registration failed.", false);
     }
   };
 
   document.getElementById("verifyBtn").onclick = async () => {
-    const pid = verifyId.value.trim();
+    const pid = document.getElementById("verifyId").value.trim();
     try {
       const data = await contract.methods.verifyProduct(pid).call();
       if (!data.exists) {
@@ -446,7 +458,7 @@
   };
 
   document.getElementById("confirmBtn").onclick = async () => {
-    const pid = verifyId.value.trim();
+    const pid = document.getElementById("verifyId").value.trim();
     try {
       await contract.methods.confirmDelivery(pid).send({ from: account });
       alert("Delivery confirmed!");
@@ -456,8 +468,8 @@
   };
 
   document.getElementById("fraudBtn").onclick = async () => {
-    const pid = verifyId.value.trim();
-    const text = fraudText.value.trim();
+    const pid = document.getElementById("verifyId").value.trim();
+    const text = document.getElementById("fraudText").value.trim();
     if (!pid || !text) {
       showMsg("fraudMsg", "Enter Product ID and description.", false);
       return;
