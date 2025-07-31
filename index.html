@@ -18,11 +18,14 @@
   <input id="registerId" placeholder="Product ID" />
   <input id="registerName" placeholder="Product Name" />
   <input id="registerManufacturer" placeholder="Manufacturer" />
+  <label><input type="checkbox" id="registerDelivered" /> Delivered</label>
   <button onclick="registerProduct()">Register</button>
   <br>
   <canvas id="qrCanvas"></canvas>
   <br>
   <a id="qrDownload" download="qrcode.png" style="display:none;">📥 Download QR Code</a>
+  <br>
+  <a href="qr.html">📄 Go to QR Page</a>
 
   <h2>🔍 Verify Product (Scan or Enter ID)</h2>
   <input id="verifyId" placeholder="Product ID" />
@@ -35,13 +38,17 @@
   <button onclick="switchCamera()">🔄 Switch Camera</button>
   <button onclick="toggleFlash()">💡 Toggle Flash</button>
 
+  <h2>📢 Fraud Reports</h2>
+  <div id="fraudReports">Loading...</div>
+
 <script>
 let currentCameraId = null;
 let currentFlashOn = false;
 let scanner;
 
 const contractAddress = "0x77387a8b2f51c7bb777739d01a19c3d98c0e4c75";
-const abi = [ [
+const abi = [
+	[
 	{
 		"inputs": [
 			{
@@ -133,7 +140,8 @@ const abi = [ [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]];
+]
+]; // Keep your existing ABI here
 
 let web3, contract;
 
@@ -143,6 +151,13 @@ window.addEventListener('load', async () => {
     await ethereum.request({ method: "eth_requestAccounts" });
     contract = new web3.eth.Contract(abi, contractAddress);
     startScanner();
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    if (id) {
+      document.getElementById("verifyId").value = id;
+      verifyProduct(id);
+    }
+    loadFraudReports();
   } else {
     alert("Install MetaMask");
   }
@@ -175,7 +190,7 @@ async function verifyProduct(passedId = null) {
 }
 
 function generateQRCode(productId) {
-  const url = `https://yourdomain.com/index.html?id=${productId}`; // Replace with your domain
+  const url = `${window.location.origin}/index.html?id=${productId}`;
   const qr = new QRious({
     element: document.getElementById('qrCanvas'),
     value: url,
@@ -245,16 +260,22 @@ function toggleFlash() {
   });
 }
 
-// Auto verify from URL on load
-window.onload = () => {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  if (id) {
-    document.getElementById("verifyId").value = id;
-    verifyProduct(id);
+async function loadFraudReports() {
+  const container = document.getElementById("fraudReports");
+  try {
+    const total = 5; // Replace with smart contract call if available
+    container.innerHTML = "";
+    for (let i = 1; i <= total; i++) {
+      try {
+        const res = await contract.methods.verifyProduct(i).call();
+        if (!res.name) continue;
+        container.innerHTML += `<p><strong>ID ${i}:</strong> ${res.name} (${res.manufacturer})</p>`;
+      } catch (e) {}
+    }
+  } catch (e) {
+    container.innerText = "Failed to load reports.";
   }
-};
+}
 </script>
 </body>
 </html>
-qq
