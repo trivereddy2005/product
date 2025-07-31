@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; margin: 20px; }
-    input, button { margin: 5px; padding: 8px; }
+    input, button, select { margin: 5px; padding: 8px; }
     #qrCanvas { margin-top: 10px; }
   </style>
 </head>
@@ -18,16 +18,20 @@
   <input id="registerId" placeholder="Product ID" />
   <input id="registerName" placeholder="Product Name" />
   <input id="registerManufacturer" placeholder="Manufacturer" />
-  <label><input type="checkbox" id="registerDelivered" /> Delivered</label>
+  <label>
+    Delivered?
+    <select id="deliveredStatus">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+  </label>
   <button onclick="registerProduct()">Register</button>
   <br>
   <canvas id="qrCanvas"></canvas>
   <br>
   <a id="qrDownload" download="qrcode.png" style="display:none;">📥 Download QR Code</a>
-  <br>
-  <a href="qr.html">📄 Go to QR Page</a>
 
-  <h2>🔍 Verify Product (Scan or Enter ID)</h2>
+  <h2>🔍 Verify Product</h2>
   <input id="verifyId" placeholder="Product ID" />
   <button onclick="verifyProduct()">Verify</button>
   <p id="verifyResult"></p>
@@ -38,8 +42,9 @@
   <button onclick="switchCamera()">🔄 Switch Camera</button>
   <button onclick="toggleFlash()">💡 Toggle Flash</button>
 
-  <h2>📢 Fraud Reports</h2>
-  <div id="fraudReports">Loading...</div>
+  <h2>🚨 Fraud Reports</h2>
+  <button onclick="showFraudReports()">Show Reports</button>
+  <ul id="fraudList"></ul>
 
 <script>
 let currentCameraId = null;
@@ -48,100 +53,42 @@ let scanner;
 
 const contractAddress = "0x77387a8b2f51c7bb777739d01a19c3d98c0e4c75";
 const abi = [
-	[
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			}
-		],
-		"name": "registerProduct",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "products",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "delivered",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "verifyProduct",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "delivered",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
-]; // Keep your existing ABI here
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "manufacturer", "type": "string" }
+    ],
+    "name": "registerProduct",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+    "name": "products",
+    "outputs": [
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "manufacturer", "type": "string" },
+      { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+      { "internalType": "bool", "name": "delivered", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [ { "internalType": "uint256", "name": "id", "type": "uint256" } ],
+    "name": "verifyProduct",
+    "outputs": [
+      { "internalType": "string", "name": "name", "type": "string" },
+      { "internalType": "string", "name": "manufacturer", "type": "string" },
+      { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+      { "internalType": "bool", "name": "delivered", "type": "bool" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 let web3, contract;
 
@@ -151,13 +98,6 @@ window.addEventListener('load', async () => {
     await ethereum.request({ method: "eth_requestAccounts" });
     contract = new web3.eth.Contract(abi, contractAddress);
     startScanner();
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    if (id) {
-      document.getElementById("verifyId").value = id;
-      verifyProduct(id);
-    }
-    loadFraudReports();
   } else {
     alert("Install MetaMask");
   }
@@ -167,6 +107,7 @@ async function registerProduct() {
   const id = document.getElementById("registerId").value;
   const name = document.getElementById("registerName").value;
   const manufacturer = document.getElementById("registerManufacturer").value;
+  const delivered = document.getElementById("deliveredStatus").value === "true";
 
   try {
     await contract.methods.registerProduct(id, name, manufacturer)
@@ -190,13 +131,12 @@ async function verifyProduct(passedId = null) {
 }
 
 function generateQRCode(productId) {
-  const url = `${window.location.origin}/index.html?id=${productId}`;
+  const url = `https://trivereddy2005.github.io/qr.html?id=${productId}`;
   const qr = new QRious({
     element: document.getElementById('qrCanvas'),
     value: url,
     size: 200
   });
-
   const downloadLink = document.getElementById("qrDownload");
   downloadLink.href = qr.toDataURL();
   downloadLink.style.display = 'inline-block';
@@ -223,7 +163,7 @@ function startScanner() {
             console.log("Not a valid URL");
           }
         },
-        err => { console.log("Scan error:", err); }
+        err => console.log("Scan error:", err)
       );
     }
   });
@@ -253,29 +193,31 @@ function switchCamera() {
 }
 
 function toggleFlash() {
-  scanner.applyVideoConstraints({
-    advanced: [{ torch: !currentFlashOn }]
-  }).then(() => {
-    currentFlashOn = !currentFlashOn;
+  scanner.applyVideoConstraints({ advanced: [{ torch: !currentFlashOn }] })
+    .then(() => { currentFlashOn = !currentFlashOn; });
+}
+
+function showFraudReports() {
+  const list = document.getElementById("fraudList");
+  list.innerHTML = "";
+  [
+    { id: "123", reason: "Tampered packaging" },
+    { id: "456", reason: "Expired product sold" }
+  ].forEach(report => {
+    const li = document.createElement("li");
+    li.innerText = `Product ID: ${report.id}, Reason: ${report.reason}`;
+    list.appendChild(li);
   });
 }
 
-async function loadFraudReports() {
-  const container = document.getElementById("fraudReports");
-  try {
-    const total = 5; // Replace with smart contract call if available
-    container.innerHTML = "";
-    for (let i = 1; i <= total; i++) {
-      try {
-        const res = await contract.methods.verifyProduct(i).call();
-        if (!res.name) continue;
-        container.innerHTML += `<p><strong>ID ${i}:</strong> ${res.name} (${res.manufacturer})</p>`;
-      } catch (e) {}
-    }
-  } catch (e) {
-    container.innerText = "Failed to load reports.";
+window.onload = () => {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if (id) {
+    document.getElementById("verifyId").value = id;
+    verifyProduct(id);
   }
-}
+};
 </script>
 </body>
 </html>
