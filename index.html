@@ -120,7 +120,8 @@
     let userAccount;
     let currentOTP;
 
-    const contractABI = [ [
+    const contractABI = [
+	    [
 	{
 		"inputs": [
 			{
@@ -322,8 +323,9 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-] ];
-    const contractAddress = "0x90b10ce263408dd2109a252d40199a1e1a5aeb01";
+]
+    ];
+    const contractAddress = "0xaaa6cafac4009f8a3bb7b6acae33f088f9d925f0";
 
     async function connectWallet() {
       if (window.ethereum) {
@@ -366,9 +368,34 @@
     }
 
     function sendOTP() {
+      const mobile = document.getElementById("buyerMobile").value;
       const otp = Math.floor(100000 + Math.random() * 900000);
       currentOTP = otp;
-      alert("OTP Sent to Mobile (Simulated): " + otp);
+
+      fetch("https://api.twilio.com/2010-04-01/Accounts/AC529c14040897b080d370931d6415dfa2/Messages.json", {
+        method: "POST",
+        headers: {
+          "Authorization": "Basic " + btoa("AC529c14040897b080d370931d6415dfa2:d34bf372e8ca8b87f689664b7f158952"),
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          To: "+91" + mobile,
+          From: "+YourTwilioVerifiedNumber", // replace with Twilio phone number
+          Body: `Your OTP is: ${otp}`
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sid) {
+          alert("OTP sent to mobile number.");
+        } else {
+          alert("Failed to send OTP.");
+        }
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        alert("Error sending OTP.");
+      });
     }
 
     async function confirmDelivery() {
