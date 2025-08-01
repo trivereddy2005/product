@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #e3f2fd, #ffffff, #e8f5e9); /* Blue-White-Green */
+      background: linear-gradient(to right, #e3f2fd, #ffffff, #e8f5e9);
       color: #004d40;
       margin: 0;
       padding: 0;
@@ -33,7 +33,9 @@
     h2 {
       color: #00695c;
     }
-    input, textarea, button {
+    input,
+    textarea,
+    button {
       display: block;
       width: 100%;
       margin-bottom: 1rem;
@@ -118,8 +120,7 @@
     let userAccount;
     let currentOTP;
 
-    const contractABI = [
-	    [
+    const contractABI = [ [
 	{
 		"inputs": [
 			{
@@ -134,7 +135,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "buyerMobile",
+				"name": "mobile",
 				"type": "string"
 			}
 		],
@@ -157,7 +158,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "manufacturer",
+				"name": "mfg",
 				"type": "string"
 			}
 		],
@@ -201,13 +202,8 @@
 			},
 			{
 				"internalType": "string",
-				"name": "buyerMobile",
+				"name": "mobile",
 				"type": "string"
-			},
-			{
-				"internalType": "bool",
-				"name": "delivered",
-				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -319,16 +315,15 @@
 			},
 			{
 				"internalType": "bool",
-				"name": "exists",
+				"name": "registered",
 				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
-    ];
-    const contractAddress = "0x8411dfc1a1d816b4cc0e087bdc0e10423022cf83";
+] ];
+    const contractAddress = "0x90b10ce263408dd2109a252d40199a1e1a5aeb01";
 
     async function connectWallet() {
       if (window.ethereum) {
@@ -371,34 +366,9 @@
     }
 
     function sendOTP() {
-      const mobile = document.getElementById("buyerMobile").value;
       const otp = Math.floor(100000 + Math.random() * 900000);
       currentOTP = otp;
-
-      fetch("https://api.twilio.com/2010-04-01/Accounts/ACXXXXXX/Messages.json", {
-        method: "POST",
-        headers: {
-          "Authorization": "Basic " + btoa("ACXXXXXX:YOUR_AUTH_TOKEN"),
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({
-          To: "+91" + mobile,
-          From: "+YourTwilioNumber",
-          Body: `Your OTP is: ${otp}`
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.sid) {
-          alert("OTP sent to mobile number.");
-        } else {
-          alert("Failed to send OTP.");
-        }
-      })
-      .catch(err => {
-        console.error("Error:", err);
-        alert("Error sending OTP.");
-      });
+      alert("OTP Sent to Mobile (Simulated): " + otp);
     }
 
     async function confirmDelivery() {
