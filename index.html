@@ -86,10 +86,12 @@
     </div>
 
     <div class="section">
-      <h2>Delivery Confirmation</h2>
+      <h2>Delivery Confirmation with OTP</h2>
       <input id="deliveryId" placeholder="Product ID" />
       <input id="buyerName" placeholder="Buyer Name" />
       <input id="buyerMobile" placeholder="Buyer Mobile Number" />
+      <button onclick="sendOTP()">Send OTP</button>
+      <input id="otpCode" placeholder="Enter OTP" />
       <button onclick="confirmDelivery()">Confirm Delivery</button>
     </div>
 
@@ -111,9 +113,9 @@
   <script>
     let contract;
     let userAccount;
+    let currentOTP;
 
-    const contractABI = [
-      [
+    const contractABI = [[
 	{
 		"inputs": [
 			{
@@ -344,8 +346,7 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
-    ];
+]];
     const contractAddress = "0x3b091bae14a7095db3b84d78894a4da8a0a29c0c";
 
     async function connectWallet() {
@@ -374,10 +375,23 @@
       document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}`;
     }
 
+    function sendOTP() {
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      currentOTP = otp;
+      alert("OTP Sent to Mobile (Simulated): " + otp);
+    }
+
     async function confirmDelivery() {
       const id = document.getElementById("deliveryId").value;
       const name = document.getElementById("buyerName").value;
       const mobile = document.getElementById("buyerMobile").value;
+      const otp = document.getElementById("otpCode").value;
+
+      if (parseInt(otp) !== currentOTP) {
+        alert("Invalid OTP");
+        return;
+      }
+
       await contract.methods.confirmDelivery(id, name, mobile).send({ from: userAccount });
       alert("Delivery confirmed!");
     }
