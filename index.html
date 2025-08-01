@@ -11,21 +11,19 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+      background: linear-gradient(to right, #ffe0e9, #dfe9f3);
       color: #333;
     }
     header {
       padding: 20px;
-      background-color: #c94b4b;
-      background-image: linear-gradient(147deg, #c94b4b 0%, #4b134f 74%);
+      background-color: #b24592;
+      background-image: linear-gradient(147deg, #b24592 0%, #f15f79 74%);
       color: white;
       text-align: center;
       position: relative;
     }
-    header button {
-      position: absolute;
-      top: 20px;
-      right: 20px;
+    #connectWallet {
+      margin-top: 10px;
     }
     main {
       padding: 20px;
@@ -72,7 +70,7 @@
 </head>
 <body>
   <header>
-    <h1>💖 Product Registry DApp</h1>
+    <h1> Product Registry DApp</h1>
     <button id="connectWallet">🔗 Connect Wallet</button>
   </header>
   <main>
@@ -370,18 +368,21 @@
 		"type": "function"
 	}
 ]
-    ] // Paste ABI here
+    ];
 
     let web3;
     let contract;
+    let account;
 
     document.getElementById("connectWallet").addEventListener("click", async () => {
       if (window.ethereum) {
         try {
           await window.ethereum.request({ method: "eth_requestAccounts" });
           web3 = new Web3(window.ethereum);
+          const accounts = await web3.eth.getAccounts();
+          account = accounts[0];
           contract = new web3.eth.Contract(contractABI, contractAddress);
-          alert("✅ Wallet connected!");
+          alert("✅ Wallet connected: " + account);
         } catch (error) {
           alert("❌ User denied account access");
         }
@@ -389,6 +390,29 @@
         alert("⚠️ Please install MetaMask.");
       }
     });
+
+    function registerProduct() {
+      const id = document.getElementById("registerId").value;
+      const name = document.getElementById("registerName").value;
+      const manufacturer = document.getElementById("registerManufacturer").value;
+      contract.methods.registerProduct(id, name, manufacturer).send({ from: account })
+        .then(() => alert("✅ Product registered successfully!"))
+        .catch(err => alert("❌ Failed to register product: " + err.message));
+    }
+
+    function verifyProduct() {
+      const id = document.getElementById("verifyId").value;
+      contract.methods.getProduct(id).call()
+        .then(product => {
+          if (product && product.name) {
+            document.getElementById("verifyResult").innerText =
+              `✅ Product Found:\nName: ${product.name}\nManufacturer: ${product.manufacturer}`;
+          } else {
+            document.getElementById("verifyResult").innerText = "❌ Product not found";
+          }
+        })
+        .catch(err => document.getElementById("verifyResult").innerText = "❌ Error: " + err.message);
+    }
 
     function generateQRCode() {
       const id = document.getElementById("registerId").value;
