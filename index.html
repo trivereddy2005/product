@@ -120,7 +120,8 @@
     let userAccount;
     let currentOTP;
 
-    const contractABI = [ [
+    const contractABI = [
+	    [
 	{
 		"inputs": [
 			{
@@ -322,8 +323,9 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-] ];
-    const contractAddress = "0x90b10ce263408dd2109a252d40199a1e1a5aeb01";
+]
+    ];
+    const contractAddress = "0xb17471876099e4bedbb2d22fb3016c52585895e5";
 
     async function connectWallet() {
       if (window.ethereum) {
