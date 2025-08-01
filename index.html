@@ -1,135 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Product Registry DApp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      font-family: 'Raleway', sans-serif;
-      background: linear-gradient(120deg, #fbc2eb 0%, #a6c1ee 100%);
+      background: linear-gradient(to right, #fbc2eb, #a6c1ee);
       color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
     }
-
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 2.2rem;
-      color: #fff;
+    header {
+      padding: 20px;
+      background-color: #c94b4b;
+      background-image: linear-gradient(147deg, #c94b4b 0%, #4b134f 74%);
+      color: white;
+      text-align: center;
+      position: relative;
     }
-
-    section {
-      background: #ffffffd9;
-      border-radius: 16px;
-      padding: 1.5rem;
-      width: 90%;
-      max-width: 500px;
-      margin: 1rem 0;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    header button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
     }
-
-    h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      color: #444;
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
     }
-
-    input, button {
+    input, button, select, textarea {
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
       width: 100%;
-      padding: 0.75rem;
-      margin: 0.4rem 0;
-      border-radius: 10px;
-      border: none;
-      font-size: 1rem;
+      box-sizing: border-box;
     }
-
-    input {
-      background-color: #f3f3f3;
+    button {
+      background-color: #ff758c;
+      background-image: linear-gradient(147deg, #ff758c 0%, #ff7eb3 74%);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff6f91;
+    }
+    section {
+      margin-bottom: 30px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    #qrCanvas {
+      margin-top: 10px;
       border: 1px solid #ccc;
     }
-
-    button {
-      background-color: #ff6ec4;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    button:hover {
-      background-color: #f875aa;
-    }
-
-    #qrcode {
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    #output {
-      white-space: pre-wrap;
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-top: 1rem;
+    a#qrDownload {
+      display: inline-block;
+      margin-top: 10px;
+      color: #4b134f;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1> Product Registry DApp </h1>
+  <header>
+    <h1>💖 Product Registry DApp</h1>
+    <button id="connectWallet">🔗 Connect Wallet</button>
+  </header>
+  <main>
+    <section>
+      <h2>Register Product</h2>
+      <input id="registerId" placeholder="Product ID" />
+      <input id="registerName" placeholder="Product Name" />
+      <input id="registerManufacturer" placeholder="Manufacturer" />
+      <button onclick="registerProduct()">Register Product</button>
+    </section>
 
-  <section>
-    <h2>Register Product</h2>
-    <input id="productId" placeholder="Product ID" />
-    <input id="productName" placeholder="Product Name" />
-    <input id="manufacturer" placeholder="Manufacturer" />
-    <button onclick="registerProduct()">Register</button>
-    <div id="qrcode"></div>
-  </section>
+    <section>
+      <h2>Generate QR Code</h2>
+      <button onclick="generateQRCode()">Generate</button>
+      <canvas id="qrCanvas"></canvas><br>
+      <a id="qrDownload" download="qrcode.png">📥 Download QR Code</a>
+    </section>
 
-  <section>
-    <h2>Verify Product</h2>
-    <input id="verifyId" placeholder="Enter Product ID to Verify" />
-    <button onclick="verifyProduct()">Verify</button>
-    <div id="output"></div>
-  </section>
+    <section>
+      <h2>Verify Product</h2>
+      <input id="verifyId" placeholder="Product ID" />
+      <button onclick="verifyProduct()">✔️ Verify</button>
+      <p id="verifyResult"></p>
+    </section>
 
-  <section>
-    <h2>Mark Delivery</h2>
-    <input id="deliveryProductId" placeholder="Product ID" />
-    <input id="buyerName" placeholder="Buyer Name" />
-    <input id="buyerMobile" placeholder="Buyer Mobile Number" />
-    <button onclick="sendOTP()">Send OTP</button>
-    <input id="inputOtp" placeholder="Enter OTP" />
-    <button onclick="verifyAndDeliver()">Verify OTP & Deliver</button>
-  </section>
+    <section>
+      <h2>Delivery Confirmation with OTP</h2>
+      <input id="buyerName" placeholder="Buyer Name" />
+      <input id="buyerMobile" placeholder="Mobile Number" />
+      <button onclick="sendOTP()">📨 Send OTP</button>
+      <input id="otpInput" placeholder="Enter OTP" />
+      <button onclick="confirmDelivery()">✅ Confirm Delivery</button>
+    </section>
 
-  <section>
-    <h2>Report Fraud</h2>
-    <input id="fraudProductId" placeholder="Product ID" />
-    <input id="fraudDesc" placeholder="Fraud Description" />
-    <button onclick="reportFraud()">Report</button>
-  </section>
+    <section>
+      <h2>Report Fraud</h2>
+      <input id="fraudProductId" placeholder="Product ID for Report" />
+      <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3"></textarea>
+      <button onclick="reportFraud()">🚨 Submit Report</button>
+      <input id="searchFraudId" placeholder="Search by Product ID" />
+      <button onclick="searchFraudReports()">🔍 Search Reports</button>
+      <div id="fraudReports">No reports available.</div>
+    </section>
 
-  <section>
-    <h2>Check Fraud Reports</h2>
-    <input id="fraudCheckId" placeholder="Product ID" />
-    <button onclick="getFraudReports()">Check Reports</button>
-    <div id="fraudReports"></div>
-  </section>
+    <section>
+      <h2>Scan QR Code</h2>
+      <div id="scanner" style="width:300px;"></div>
+      <p id="scanResult"></p>
+      <button onclick="switchCamera()">🔄 Switch Camera</button>
+      <button onclick="toggleFlash()">💡 Toggle Flash</button>
+    </section>
+  </main>
 
-<script>
-let web3;
-let contract;
-let generatedOtp = "";
-const contractAddress = "0xa19df834f4270c254434e3bc386e27a9e0fbbb4f";
-const abi = [
-[
+  <script>
+    const contractAddress = "0xa19df834f4270c254434e3bc386e27a9e0fbbb4f";
+    const contractABI = [
+	    [
 	{
 		"anonymous": false,
 		"inputs": [
@@ -369,76 +369,37 @@ const abi = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]  
-];
+]
+    ] // Paste ABI here
 
-window.addEventListener('load', async () => {
-  if (window.ethereum) {
-    web3 = new Web3(window.ethereum);
-    await ethereum.request({ method: 'eth_requestAccounts' });
-    contract = new web3.eth.Contract(abi, contractAddress);
-  } else {
-    alert("MetaMask not detected!");
-  }
-});
+    let web3;
+    let contract;
 
-async function registerProduct() {
-  const id = document.getElementById("productId").value;
-  const name = document.getElementById("productName").value;
-  const manufacturer = document.getElementById("manufacturer").value;
-  const account = (await web3.eth.getAccounts())[0];
+    document.getElementById("connectWallet").addEventListener("click", async () => {
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({ method: "eth_requestAccounts" });
+          web3 = new Web3(window.ethereum);
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+          alert("✅ Wallet connected!");
+        } catch (error) {
+          alert("❌ User denied account access");
+        }
+      } else {
+        alert("⚠️ Please install MetaMask.");
+      }
+    });
 
-  await contract.methods.registerProduct(id, name, manufacturer).send({ from: account });
-  new QRCode(document.getElementById("qrcode"), `${name} by ${manufacturer}`);
-}
+    function generateQRCode() {
+      const id = document.getElementById("registerId").value;
+      const name = document.getElementById("registerName").value;
+      const manufacturer = document.getElementById("registerManufacturer").value;
+      const info = `Product ID: ${id}\nName: ${name}\nManufacturer: ${manufacturer}`;
 
-async function verifyProduct() {
-  const id = document.getElementById("verifyId").value;
-  try {
-    const res = await contract.methods.verifyProduct(id).call();
-    document.getElementById("output").textContent =
-      `Product: ${res[0]}\nManufacturer: ${res[1]}\nTimestamp: ${new Date(res[2] * 1000).toLocaleString()}\nDelivered: ${res[3]}\nBuyer: ${res[4]}\nMobile: ${res[5]}`;
-  } catch {
-    alert("Product not found!");
-  }
-}
-
-function sendOTP() {
-  generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  alert("OTP (simulated): " + generatedOtp);
-}
-
-async function verifyAndDeliver() {
-  const inputOtp = document.getElementById("inputOtp").value;
-  if (inputOtp !== generatedOtp) return alert("Invalid OTP");
-
-  const id = document.getElementById("deliveryProductId").value;
-  const name = document.getElementById("buyerName").value;
-  const mobile = document.getElementById("buyerMobile").value;
-  const account = (await web3.eth.getAccounts())[0];
-
-  await contract.methods.markDelivered(id, name, mobile).send({ from: account });
-  alert("Product marked as delivered!");
-}
-
-async function reportFraud() {
-  const id = document.getElementById("fraudProductId").value;
-  const desc = document.getElementById("fraudDesc").value;
-  const account = (await web3.eth.getAccounts())[0];
-
-  await contract.methods.reportFraud(id, desc).send({ from: account });
-  alert("Fraud reported.");
-}
-
-async function getFraudReports() {
-  const id = document.getElementById("fraudCheckId").value;
-  const reports = await contract.methods.getFraudReports(id).call();
-  let html = "";
-  reports.forEach(r => {
-    html += `<div>🕵️‍♂️ ${r.description} — ${new Date(r.reportTime * 1000).toLocaleString()}</div>`;
-  });
-  document.getElementById("fraudReports").innerHTML = html || "No reports found.";
-}
-</script>
+      const qr = new QRious({ element: document.getElementById("qrCanvas"), size: 200, value: info });
+      const downloadLink = document.getElementById("qrDownload");
+      downloadLink.href = qr.toDataURL();
+    }
+  </script>
 </body>
 </html>
