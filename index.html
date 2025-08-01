@@ -11,19 +11,24 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #ffe0e9, #dfe9f3);
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
       color: #333;
     }
     header {
       padding: 20px;
-      background-color: #b24592;
-      background-image: linear-gradient(147deg, #b24592 0%, #f15f79 74%);
+      background-color: #007bff;
       color: white;
       text-align: center;
       position: relative;
     }
     #connectWallet {
       margin-top: 10px;
+      background-color: white;
+      color: #007bff;
+      border: 2px solid #007bff;
+    }
+    #connectWallet:hover {
+      background-color: #e6f0ff;
     }
     main {
       padding: 20px;
@@ -40,14 +45,13 @@
       box-sizing: border-box;
     }
     button {
-      background-color: #ff758c;
-      background-image: linear-gradient(147deg, #ff758c 0%, #ff7eb3 74%);
+      background-color: #007bff;
       color: white;
       border: none;
       cursor: pointer;
     }
     button:hover {
-      background-color: #ff6f91;
+      background-color: #0056b3;
     }
     section {
       margin-bottom: 30px;
@@ -63,14 +67,14 @@
     a#qrDownload {
       display: inline-block;
       margin-top: 10px;
-      color: #4b134f;
+      color: #007bff;
       font-weight: bold;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1> Product Registry DApp</h1>
+    <h1>💙 Product Registry DApp</h1>
     <button id="connectWallet">🔗 Connect Wallet</button>
   </header>
   <main>
@@ -392,6 +396,7 @@
     });
 
     function registerProduct() {
+      if (!contract || !account) return alert("❗ Connect wallet first");
       const id = document.getElementById("registerId").value;
       const name = document.getElementById("registerName").value;
       const manufacturer = document.getElementById("registerManufacturer").value;
@@ -401,6 +406,7 @@
     }
 
     function verifyProduct() {
+      if (!contract) return alert("❗ Connect wallet first");
       const id = document.getElementById("verifyId").value;
       contract.methods.getProduct(id).call()
         .then(product => {
