@@ -11,7 +11,7 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      background: linear-gradient(135deg, #007bff, #ffffff, #28a745);
       color: #333;
     }
     header {
@@ -26,6 +26,9 @@
       background-color: white;
       color: #007bff;
       border: 2px solid #007bff;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
     }
     #connectWallet:hover {
       background-color: #e6f0ff;
@@ -45,13 +48,13 @@
       box-sizing: border-box;
     }
     button {
-      background-color: #007bff;
+      background-color: #28a745;
       color: white;
       border: none;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
+      background-color: #218838;
     }
     section {
       margin-bottom: 30px;
@@ -129,249 +132,29 @@
   </main>
 
   <script>
-    const contractAddress = "0xa19df834f4270c254434e3bc386e27a9e0fbbb4f";
+    const contractAddress = "0x3b091bae14a7095db3b84d78894a4da8a0a29c0c";
     const contractABI = [
-	    [
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "productId",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			}
-		],
-		"name": "FraudReported",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "buyerName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "buyerMobile",
-				"type": "string"
-			}
-		],
-		"name": "markDelivered",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "markUndelivered",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "buyerName",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "buyerMobile",
-				"type": "string"
-			}
-		],
-		"name": "ProductDelivered",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			}
-		],
-		"name": "ProductRegistered",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "ProductUndelivered",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			}
-		],
-		"name": "registerProduct",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "productId",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			}
-		],
-		"name": "reportFraud",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "productId",
-				"type": "uint256"
-			}
-		],
-		"name": "getFraudReports",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "productId",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "reportTime",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct ProductRegistry.FraudReport[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "verifyProduct",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "manufacturer",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "delivered",
-				"type": "bool"
-			},
-			{
-				"internalType": "string",
-				"name": "buyerName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "buyerMobile",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
+      {
+        "inputs": [
+          { "internalType": "string", "name": "id", "type": "string" },
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" }
+        ],
+        "name": "registerProduct",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [ { "internalType": "string", "name": "id", "type": "string" } ],
+        "name": "getProduct",
+        "outputs": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
     ];
 
     let web3;
