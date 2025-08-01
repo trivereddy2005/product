@@ -1,218 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Product Registry DApp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrious"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Registry dApp</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #ffffff, #e0f7fa, #e8f5e9);
+      color: #004d40;
       margin: 0;
-      background: linear-gradient(135deg, #007bff, #ffffff, #28a745);
-      color: #333;
+      padding: 0;
     }
+
     header {
-      padding: 20px;
-      background-color: #007bff;
-      color: white;
+      background-color: #00796b;
+      padding: 1rem;
       text-align: center;
-      position: relative;
-    }
-    #connectWallet {
-      margin-top: 10px;
-      background-color: white;
-      color: #007bff;
-      border: 2px solid #007bff;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-    }
-    #connectWallet:hover {
-      background-color: #e6f0ff;
-    }
-    main {
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-    input, button, select, textarea {
-      margin: 5px 0;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #28a745;
       color: white;
-      border: none;
-      cursor: pointer;
     }
-    button:hover {
-      background-color: #218838;
-    }
-    section {
-      margin-bottom: 30px;
-      background-color: white;
-      padding: 20px;
+
+    .container {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+      background-color: #ffffffcc;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    #qrCanvas {
-      margin-top: 10px;
+
+    h2 {
+      color: #00695c;
+    }
+
+    input,
+    textarea,
+    button {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.8rem;
+      font-size: 1rem;
+      border-radius: 5px;
       border: 1px solid #ccc;
     }
-    a#qrDownload {
-      display: inline-block;
-      margin-top: 10px;
-      color: #007bff;
-      font-weight: bold;
+
+    button {
+      background-color: #00796b;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    .section {
+      margin-top: 2rem;
     }
   </style>
 </head>
+
 <body>
   <header>
-    <h1>💙 Product Registry DApp</h1>
-    <button id="connectWallet">🔗 Connect Wallet</button>
+    <h1>Product Registry dApp</h1>
+    <button onclick="connectWallet()">Connect Wallet</button>
   </header>
-  <main>
-    <section>
+
+  <div class="container">
+    <div class="section">
       <h2>Register Product</h2>
-      <input id="registerId" placeholder="Product ID" />
-      <input id="registerName" placeholder="Product Name" />
-      <input id="registerManufacturer" placeholder="Manufacturer" />
+      <input id="productId" placeholder="Product ID" />
+      <input id="productName" placeholder="Product Name" />
+      <input id="manufacturer" placeholder="Manufacturer" />
       <button onclick="registerProduct()">Register Product</button>
-    </section>
+    </div>
 
-    <section>
-      <h2>Generate QR Code</h2>
-      <button onclick="generateQRCode()">Generate</button>
-      <canvas id="qrCanvas"></canvas><br>
-      <a id="qrDownload" download="qrcode.png">📥 Download QR Code</a>
-    </section>
-
-    <section>
+    <div class="section">
       <h2>Verify Product</h2>
-      <input id="verifyId" placeholder="Product ID" />
-      <button onclick="verifyProduct()">✔️ Verify</button>
+      <input id="verifyId" placeholder="Enter Product ID to Verify" />
+      <button onclick="verifyProduct()">Verify Product</button>
       <p id="verifyResult"></p>
-    </section>
+    </div>
 
-    <section>
-      <h2>Delivery Confirmation with OTP</h2>
+    <div class="section">
+      <h2>Delivery Confirmation</h2>
+      <input id="deliveryId" placeholder="Product ID" />
       <input id="buyerName" placeholder="Buyer Name" />
-      <input id="buyerMobile" placeholder="Mobile Number" />
-      <button onclick="sendOTP()">📨 Send OTP</button>
-      <input id="otpInput" placeholder="Enter OTP" />
-      <button onclick="confirmDelivery()">✅ Confirm Delivery</button>
-    </section>
+      <input id="buyerMobile" placeholder="Buyer Mobile Number" />
+      <button onclick="confirmDelivery()">Confirm Delivery</button>
+    </div>
 
-    <section>
-      <h2>Report Fraud</h2>
-      <input id="fraudProductId" placeholder="Product ID for Report" />
-      <textarea id="fraudDescription" placeholder="Describe fraud..." rows="3"></textarea>
-      <button onclick="reportFraud()">🚨 Submit Report</button>
-      <input id="searchFraudId" placeholder="Search by Product ID" />
-      <button onclick="searchFraudReports()">🔍 Search Reports</button>
-      <div id="fraudReports">No reports available.</div>
-    </section>
+    <div class="section">
+      <h2>Fraud Report</h2>
+      <input id="fraudProductId" placeholder="Product ID" />
+      <textarea id="fraudDescription" placeholder="Describe the issue..."></textarea>
+      <button onclick="submitFraudReport()">Submit Report</button>
+    </div>
 
-    <section>
-      <h2>Scan QR Code</h2>
-      <div id="scanner" style="width:300px;"></div>
-      <p id="scanResult"></p>
-      <button onclick="switchCamera()">🔄 Switch Camera</button>
-      <button onclick="toggleFlash()">💡 Toggle Flash</button>
-    </section>
-  </main>
+    <div class="section">
+      <h2>Check Fraud Reports</h2>
+      <input id="searchProductId" placeholder="Product ID to Search Reports" />
+      <button onclick="searchFraudReports()">Search Reports</button>
+      <ul id="fraudReportsList"></ul>
+    </div>
+  </div>
 
   <script>
-    const contractAddress = "0x3b091bae14a7095db3b84d78894a4da8a0a29c0c";
-    const contractABI = [
-      {
-        "inputs": [
-          { "internalType": "string", "name": "id", "type": "string" },
-          { "internalType": "string", "name": "name", "type": "string" },
-          { "internalType": "string", "name": "manufacturer", "type": "string" }
-        ],
-        "name": "registerProduct",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [ { "internalType": "string", "name": "id", "type": "string" } ],
-        "name": "getProduct",
-        "outputs": [
-          { "internalType": "string", "name": "name", "type": "string" },
-          { "internalType": "string", "name": "manufacturer", "type": "string" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-
-    let web3;
     let contract;
-    let account;
+    let userAccount;
 
-    document.getElementById("connectWallet").addEventListener("click", async () => {
+    const contractABI = [
+      [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "buyerName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "buyerMobile",
+				"type": "string"
+			}
+		],
+		"name": "confirmDelivery",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			}
+		],
+		"name": "registerProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			}
+		],
+		"name": "reportFraud",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "deliveries",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "buyerName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "buyerMobile",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "confirmed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "fraudReports",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "reporter",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			}
+		],
+		"name": "getDelivery",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "buyerName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "buyerMobile",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "confirmed",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			}
+		],
+		"name": "getFraudReports",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "reporter",
+						"type": "address"
+					}
+				],
+				"internalType": "struct ProductRegistry.FraudReport[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "id",
+				"type": "string"
+			}
+		],
+		"name": "getProduct",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "products",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "manufacturer",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+    ];
+    const contractAddress = "0x3b091bae14a7095db3b84d78894a4da8a0a29c0c";
+
+    async function connectWallet() {
       if (window.ethereum) {
-        try {
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          web3 = new Web3(window.ethereum);
-          const accounts = await web3.eth.getAccounts();
-          account = accounts[0];
-          contract = new web3.eth.Contract(contractABI, contractAddress);
-          alert("✅ Wallet connected: " + account);
-        } catch (error) {
-          alert("❌ User denied account access");
-        }
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAccount = accounts[0];
+        const web3 = new Web3(window.ethereum);
+        contract = new web3.eth.Contract(contractABI, contractAddress);
+        alert("Wallet connected: " + userAccount);
       } else {
-        alert("⚠️ Please install MetaMask.");
+        alert("MetaMask not detected");
       }
-    });
-
-    function registerProduct() {
-      if (!contract || !account) return alert("❗ Connect wallet first");
-      const id = document.getElementById("registerId").value;
-      const name = document.getElementById("registerName").value;
-      const manufacturer = document.getElementById("registerManufacturer").value;
-      contract.methods.registerProduct(id, name, manufacturer).send({ from: account })
-        .then(() => alert("✅ Product registered successfully!"))
-        .catch(err => alert("❌ Failed to register product: " + err.message));
     }
 
-    function verifyProduct() {
-      if (!contract) return alert("❗ Connect wallet first");
+    async function registerProduct() {
+      const id = document.getElementById("productId").value;
+      const name = document.getElementById("productName").value;
+      const mfg = document.getElementById("manufacturer").value;
+      await contract.methods.registerProduct(id, name, mfg).send({ from: userAccount });
+      alert("Product registered!");
+    }
+
+    async function verifyProduct() {
       const id = document.getElementById("verifyId").value;
-      contract.methods.getProduct(id).call()
-        .then(product => {
-          if (product && product.name) {
-            document.getElementById("verifyResult").innerText =
-              `✅ Product Found:\nName: ${product.name}\nManufacturer: ${product.manufacturer}`;
-          } else {
-            document.getElementById("verifyResult").innerText = "❌ Product not found";
-          }
-        })
-        .catch(err => document.getElementById("verifyResult").innerText = "❌ Error: " + err.message);
+      const result = await contract.methods.getProduct(id).call();
+      document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}`;
     }
 
-    function generateQRCode() {
-      const id = document.getElementById("registerId").value;
-      const name = document.getElementById("registerName").value;
-      const manufacturer = document.getElementById("registerManufacturer").value;
-      const info = `Product ID: ${id}\nName: ${name}\nManufacturer: ${manufacturer}`;
+    async function confirmDelivery() {
+      const id = document.getElementById("deliveryId").value;
+      const name = document.getElementById("buyerName").value;
+      const mobile = document.getElementById("buyerMobile").value;
+      await contract.methods.confirmDelivery(id, name, mobile).send({ from: userAccount });
+      alert("Delivery confirmed!");
+    }
 
-      const qr = new QRious({ element: document.getElementById("qrCanvas"), size: 200, value: info });
-      const downloadLink = document.getElementById("qrDownload");
-      downloadLink.href = qr.toDataURL();
+    async function submitFraudReport() {
+      const id = document.getElementById("fraudProductId").value;
+      const desc = document.getElementById("fraudDescription").value;
+      await contract.methods.reportFraud(id, desc).send({ from: userAccount });
+      alert("Report submitted!");
+    }
+
+    async function searchFraudReports() {
+      const id = document.getElementById("searchProductId").value;
+      const reports = await contract.methods.getFraudReports(id).call();
+      const list = document.getElementById("fraudReportsList");
+      list.innerHTML = "";
+      reports.forEach(report => {
+        const li = document.createElement("li");
+        li.textContent = `Reported by: ${report.reporter} - ${report.description}`;
+        list.appendChild(li);
+      });
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
 </body>
+
 </html>
