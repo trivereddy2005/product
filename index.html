@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Product Registry dApp</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #ffffff, #e0f7fa, #e8f5e9);
+      background: linear-gradient(to right, #e3f2fd, #ffffff, #e8f5e9);
       color: #004d40;
       margin: 0;
       padding: 0;
     }
-
     header {
       background-color: #00796b;
       padding: 1rem;
       text-align: center;
       color: white;
     }
-
+    .connect-wallet {
+      margin-top: 1rem;
+      text-align: center;
+    }
     .container {
       padding: 2rem;
       max-width: 800px;
@@ -29,11 +30,9 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
     h2 {
       color: #00695c;
     }
-
     input,
     textarea,
     button {
@@ -45,28 +44,26 @@
       border-radius: 5px;
       border: 1px solid #ccc;
     }
-
     button {
       background-color: #00796b;
       color: white;
       cursor: pointer;
       transition: background 0.3s;
     }
-
     button:hover {
       background-color: #004d40;
     }
-
     .section {
       margin-top: 2rem;
     }
   </style>
 </head>
-
 <body>
   <header>
     <h1>Product Registry dApp</h1>
-    <button onclick="connectWallet()">Connect Wallet</button>
+    <div class="connect-wallet">
+      <button onclick="connectWallet()">Connect Wallet</button>
+    </div>
   </header>
 
   <div class="container">
@@ -114,8 +111,8 @@
     let contract;
     let userAccount;
     let currentOTP;
-
-    const contractABI = [[
+    const contractABI = [
+	    [
 	{
 		"inputs": [
 			{
@@ -317,33 +314,48 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]];
+]
+    ];
     const contractAddress = "0x2159974e98a9593a09f31969f6ce2ff9dcd43c49";
 
     async function connectWallet() {
       if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userAccount = accounts[0];
         const web3 = new Web3(window.ethereum);
-        contract = new web3.eth.Contract(contractABI, contractAddress);
-        alert("Wallet connected: " + userAccount);
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          userAccount = accounts[0];
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+          alert("Wallet connected: " + userAccount);
+        } catch (error) {
+          console.error("User denied account access");
+        }
       } else {
         alert("MetaMask not detected");
       }
     }
 
     async function registerProduct() {
-      const id = document.getElementById("productId").value;
-      const name = document.getElementById("productName").value;
-      const mfg = document.getElementById("manufacturer").value;
-      await contract.methods.registerProduct(id, name, mfg).send({ from: userAccount });
-      alert("Product registered!");
+      try {
+        const id = document.getElementById("productId").value;
+        const name = document.getElementById("productName").value;
+        const mfg = document.getElementById("manufacturer").value;
+        await contract.methods.registerProduct(id, name, mfg).send({ from: userAccount });
+        alert("Product registered!");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to register product.");
+      }
     }
 
     async function verifyProduct() {
-      const id = document.getElementById("verifyId").value;
-      const result = await contract.methods.getProduct(id).call();
-      document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}`;
+      try {
+        const id = document.getElementById("verifyId").value;
+        const result = await contract.methods.getProduct(id).call();
+        document.getElementById("verifyResult").innerText = `Name: ${result[0]}, Manufacturer: ${result[1]}`;
+      } catch (err) {
+        console.error(err);
+        alert("Product not found or verification failed.");
+      }
     }
 
     function sendOTP() {
@@ -353,40 +365,55 @@
     }
 
     async function confirmDelivery() {
-      const id = document.getElementById("deliveryId").value;
-      const name = document.getElementById("buyerName").value;
-      const mobile = document.getElementById("buyerMobile").value;
-      const otp = document.getElementById("otpCode").value;
+      try {
+        const id = document.getElementById("deliveryId").value;
+        const name = document.getElementById("buyerName").value;
+        const mobile = document.getElementById("buyerMobile").value;
+        const otp = document.getElementById("otpCode").value;
 
-      if (parseInt(otp) !== currentOTP) {
-        alert("Invalid OTP");
-        return;
+        if (parseInt(otp) !== currentOTP) {
+          alert("Invalid OTP");
+          return;
+        }
+
+        await contract.methods.confirmDelivery(id, name, mobile).send({ from: userAccount });
+        alert("Delivery confirmed!");
+      } catch (err) {
+        console.error(err);
+        alert("Delivery confirmation failed.");
       }
-
-      await contract.methods.confirmDelivery(id, name, mobile).send({ from: userAccount });
-      alert("Delivery confirmed!");
     }
 
     async function submitFraudReport() {
-      const id = document.getElementById("fraudProductId").value;
-      const desc = document.getElementById("fraudDescription").value;
-      await contract.methods.reportFraud(id, desc).send({ from: userAccount });
-      alert("Report submitted!");
+      try {
+        const id = document.getElementById("fraudProductId").value;
+        const desc = document.getElementById("fraudDescription").value;
+        await contract.methods.reportFraud(id, desc).send({ from: userAccount });
+        alert("Report submitted!");
+      } catch (err) {
+        console.error(err);
+        alert("Fraud report submission failed.");
+      }
     }
 
     async function searchFraudReports() {
-      const id = document.getElementById("searchProductId").value;
-      const reports = await contract.methods.getFraudReports(id).call();
-      const list = document.getElementById("fraudReportsList");
-      list.innerHTML = "";
-      reports.forEach(report => {
-        const li = document.createElement("li");
-        li.textContent = `Reported by: ${report.reporter} - ${report.description}`;
-        list.appendChild(li);
-      });
+      try {
+        const id = document.getElementById("searchProductId").value;
+        const reports = await contract.methods.getFraudReports(id).call();
+        const list = document.getElementById("fraudReportsList");
+        list.innerHTML = "";
+
+        reports.forEach(report => {
+          const li = document.createElement("li");
+          li.textContent = `Reported by: ${report.reporter} - ${report.description}`;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Failed to retrieve fraud reports.");
+      }
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
 </body>
-
 </html>
