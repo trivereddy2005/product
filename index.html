@@ -130,7 +130,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "buyerMobile",
+				"name": "mobile",
 				"type": "string"
 			}
 		],
@@ -153,7 +153,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "manufacturer",
+				"name": "mfg",
 				"type": "string"
 			}
 		],
@@ -197,13 +197,8 @@
 			},
 			{
 				"internalType": "string",
-				"name": "buyerMobile",
+				"name": "mobile",
 				"type": "string"
-			},
-			{
-				"internalType": "bool",
-				"name": "confirmed",
-				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -225,43 +220,14 @@
 		"name": "fraudReports",
 		"outputs": [
 			{
-				"internalType": "string",
-				"name": "description",
-				"type": "string"
-			},
-			{
 				"internalType": "address",
 				"name": "reporter",
 				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "id",
-				"type": "string"
-			}
-		],
-		"name": "getDelivery",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "buyerName",
-				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "buyerMobile",
+				"name": "description",
 				"type": "string"
-			},
-			{
-				"internalType": "bool",
-				"name": "confirmed",
-				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -280,14 +246,14 @@
 			{
 				"components": [
 					{
-						"internalType": "string",
-						"name": "description",
-						"type": "string"
-					},
-					{
 						"internalType": "address",
 						"name": "reporter",
 						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "description",
+						"type": "string"
 					}
 				],
 				"internalType": "struct ProductRegistry.FraudReport[]",
@@ -310,12 +276,12 @@
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "name",
+				"name": "",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "manufacturer",
+				"name": "",
 				"type": "string"
 			}
 		],
@@ -341,13 +307,18 @@
 				"internalType": "string",
 				"name": "manufacturer",
 				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	}
 ]];
-    const contractAddress = "0x3b091bae14a7095db3b84d78894a4da8a0a29c0c";
+    const contractAddress = "0x2159974e98a9593a09f31969f6ce2ff9dcd43c49";
 
     async function connectWallet() {
       if (window.ethereum) {
