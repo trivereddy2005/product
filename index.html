@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #e3f2fd, #ffffff, #e8f5e9);
+      background: linear-gradient(to right, #e3f2fd, #ffffff, #e8f5e9); /* Blue-White-Green */
       color: #004d40;
       margin: 0;
       padding: 0;
@@ -33,9 +33,7 @@
     h2 {
       color: #00695c;
     }
-    input,
-    textarea,
-    button {
+    input, textarea, button {
       display: block;
       width: 100%;
       margin-bottom: 1rem;
@@ -136,7 +134,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "mobile",
+				"name": "buyerMobile",
 				"type": "string"
 			}
 		],
@@ -159,7 +157,7 @@
 			},
 			{
 				"internalType": "string",
-				"name": "mfg",
+				"name": "manufacturer",
 				"type": "string"
 			}
 		],
@@ -203,8 +201,13 @@
 			},
 			{
 				"internalType": "string",
-				"name": "mobile",
+				"name": "buyerMobile",
 				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "delivered",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -316,7 +319,7 @@
 			},
 			{
 				"internalType": "bool",
-				"name": "registered",
+				"name": "exists",
 				"type": "bool"
 			}
 		],
@@ -325,7 +328,7 @@
 	}
 ]
     ];
-    const contractAddress = "0xaaa6cafac4009f8a3bb7b6acae33f088f9d925f0";
+    const contractAddress = "0x8411dfc1a1d816b4cc0e087bdc0e10423022cf83";
 
     async function connectWallet() {
       if (window.ethereum) {
@@ -372,15 +375,15 @@
       const otp = Math.floor(100000 + Math.random() * 900000);
       currentOTP = otp;
 
-      fetch("https://api.twilio.com/2010-04-01/Accounts/AC529c14040897b080d370931d6415dfa2/Messages.json", {
+      fetch("https://api.twilio.com/2010-04-01/Accounts/ACXXXXXX/Messages.json", {
         method: "POST",
         headers: {
-          "Authorization": "Basic " + btoa("AC529c14040897b080d370931d6415dfa2:d34bf372e8ca8b87f689664b7f158952"),
+          "Authorization": "Basic " + btoa("ACXXXXXX:YOUR_AUTH_TOKEN"),
           "Content-Type": "application/x-www-form-urlencoded"
         },
         body: new URLSearchParams({
           To: "+91" + mobile,
-          From: "+YourTwilioVerifiedNumber", // replace with Twilio phone number
+          From: "+YourTwilioNumber",
           Body: `Your OTP is: ${otp}`
         })
       })
